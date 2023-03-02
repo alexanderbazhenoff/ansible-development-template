@@ -1,0 +1,3 @@
+libvirt-python==7.0.0
+molecule-libvirt
+lxml

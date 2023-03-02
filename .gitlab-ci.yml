@@ -1,0 +1,258 @@
+### Gitlab CI for ansible collections. Performs various lint, sanity checks, then molecule testing. ###
+
+# This Source Code Form is subject to the terms of the MIT License. If a copy of the MPL was not distributed with
+# this file, You can obtain one at: https://github.com/alexanderbazhenoff/ansible-development-template/blob/main/LICENSE
+
+
+# Variables:
+#
+# GITLAB_TOKEN: Project Access Tokens (required for automated version increment pushes): Settings -> Access Tokens.
+# SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_PATH: Relative folder name for molecule requirements*.txt files.
+# SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_NAME: Set-up ansible environment script (see PIP_REQUIREMENTS).
+# PIP_REQUIREMENTS: pip requirements. 'yes' if you would like to install them every tests running.
+# ANSIBLE_LINT_SCRIPT_PATH: Relative path for ansible lint script.
+# INVENTORY_CHECKER_SCRIPT_PATH: Relative path for inventory checker script.!reference:
+# ANSIBLE_TESTING_SCRIPT_FULL_PATH: Relative path for main testing script.!reference:
+# SHELL_CHECK_PATH: Path to perform shellcheck.!reference:
+# SHELL_CHECK_SHELL_NAME: Shell-name for shellcheck: https://www.shellcheck.net/
+# SHELL_CHECK_OUTPUT: Shellcheck output format.!reference:
+# KVM_IMAGES_PATH: Path of kvm images for molecule testing on kvm-related GitLab runner.
+# DEVELOP_BRANCH: Branch to merge all changes that trigger CI testing.
+# MAIN_BRANCH: Branch to push all changes after CI testing pass. Actually a branch you run all your ansible roles from.
+
+variables:
+  GITLAB_TOKEN: '********************'
+  SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_PATH: '.scripts/'
+  SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_NAME: 'setup_ansible_environment.sh'
+  PIP_REQUIREMENTS: 'no'
+  ANSIBLE_LINT_SCRIPT_PATH: '/.scripts/ansible_lint.sh'
+  INVENTORY_CHECKER_SCRIPT_PATH: '/.scripts/inventory_credentials_checker.sh'
+  ANSIBLE_TESTING_SCRIPT_FULL_PATH: '/.scripts/perform_ansible_testing.sh'
+  SHELL_CHECK_PATH: '.scripts/*.sh'
+  SHELL_CHECK_SHELL_NAME: 'bash'
+  SHELL_CHECK_OUTPUT: 'gcc'
+  KVM_IMAGES_PATH: '/var/lib/libvirt/images/ansible'
+  DEVELOP_BRANCH: 'devel'
+  MAIN_BRANCH: 'main'
+
+
+.setup_ansible_molecule_requirements: &setup_ansible_molecule_requirements
+  - echo ${PATH}
+  - cd ${SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_PATH}
+  - ./${SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_NAME} -s ${MOLECULE_SCENARIO} -p ${KVM_IMAGES_PATH}
+  - cd ..
+
+.ansible_lint:
+  before_script: *setup_ansible_molecule_requirements
+  script:
+    - touch ansible_lint_ok
+    - if [[ $CI_PIPELINE_SOURCE == "push" ]]; then .${ANSIBLE_LINT_SCRIPT_PATH} diff;
+      else .${ANSIBLE_LINT_SCRIPT_PATH} all; fi
+  after_script:
+    - echo $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - echo $CI_COMMIT_REF_NAME
+    - echo $CI_PIPELINE_SOURCE
+    - echo $CI_COMMIT_MESSAGE
+    - echo $CI_COMMIT_TAG
+    - echo $GITLAB_USER_LOGIN
+    - echo $GITLAB_USER_NAME
+
+.ansible_test_sanity:
+  before_script: *setup_ansible_molecule_requirements
+  script:
+    - touch ansible_sanity_ok
+    - if [[ $CI_PIPELINE_SOURCE == "push" ]]; then .${ANSIBLE_TESTING_SCRIPT_FULL_PATH} -m ansible-test-sanity -s diff;
+      else .${ANSIBLE_TESTING_SCRIPT_FULL_PATH} -m ansible-test-sanity -s all; fi
+
+.molecule_roles_testing:
+  before_script: *setup_ansible_molecule_requirements
+  script:
+    - .${ANSIBLE_TESTING_SCRIPT_FULL_PATH} -m molecule-${MOLECULE_SCENARIO} -s ${TEST_SELECTION} -r ${PIP_REQUIREMENTS}
+
+.semantic_version_increment:
+  script:
+    - if [[ ! -f "ansible_lint_ok" ]] || [[ ! -f "ansible_sanity_ok" ]];
+      then echo "No successful results of ansible-lint and/or sanity. Pipeline terminated without version changes.";
+      exit 1; fi
+    - if [[ $CI_COMMIT_MESSAGE =~ " role" ]] && [[ $CI_COMMIT_MESSAGE =~ "new |add" ]];
+      then VERSION_INCREMENT_LEVEL="minor"; fi
+    - if [[ $CI_COMMIT_MESSAGE =~ " collection" ]] && [[ $CI_COMMIT_MESSAGE =~ "new |add" ]];
+      then VERSION_INCREMENT_LEVEL="major"; fi
+    - if [[ $CI_COMMIT_MESSAGE =~ " minor" ]]; then $VERSION_INCREMENT_LEVEL="release"; fi
+    - .${ANSIBLE_TESTING_SCRIPT_FULL_PATH} -m increment-version -s ${TEST_SELECTION} -r ${PIP_REQUIREMENTS}
+      -d ${MAIN_BRANCH} -c ${DEVELOP_BRANCH} -v ${VERSION_INCREMENT_LEVEL}
+
+.git_merge_to_main_branch:
+  script:
+    - git checkout ${MAIN_BRANCH}
+    - git pull
+    - git merge "origin/${DEVELOP_BRANCH}" -m "${CI_COMMIT_MESSAGE}"
+    - git push http://oauth2:${GITLAB_TOKEN}@gitlab.emzior/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git ${MAIN_BRANCH}
+
+
+stages:
+  - pre_check
+  - lint_and_sanity
+  - molecule_roles_testing
+  - prepare_collection
+  - merge_to_main_branch
+
+
+# Pre-check of CI shell scripts to avoid CI fails.
+pre_check:
+  stage: pre_check
+  rules:
+    - if: '$CI_COMMIT_TAG == null && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $MAIN_BRANCH && 
+      $CI_COMMIT_REF_NAME != $MAIN_BRANCH && $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
+  tags:
+    - ansible-lint
+  before_script:
+    - if [[ ! -n "$(command -v shellcheck)" && "$(command -v apt-get)" ]]; then sudo apt-get install shellcheck -y; fi
+    - if [[ ! -n "$(command -v shellcheck)" && "$(command -v yum)" ]]; then sudo yum install ShellCheck -y; fi
+  script:
+    - shellcheck -f ${SHELL_CHECK_OUTPUT} -s ${SHELL_CHECK_SHELL_NAME} ${SHELL_CHECK_PATH}
+
+
+# Perform inventory files check for login/password specified
+credentials_check:
+  stage: lint_and_sanity
+  rules:
+    - if: '$CI_COMMIT_TAG == null && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $MAIN_BRANCH &&
+      $CI_COMMIT_REF_NAME != $MAIN_BRANCH && $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
+  tags:
+    - ansible-lint
+  script:
+    - .${INVENTORY_CHECKER_SCRIPT_PATH}
+
+
+# Perform ansible-lint on all project or just git diff
+ansible_lint:
+  stage: lint_and_sanity
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG == null && $CI_COMMIT_REF_NAME != $MAIN_BRANCH &&
+      $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_TAG == null && 
+      $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $MAIN_BRANCH'
+  tags:
+    - ansible-lint
+  variables:
+    MOLECULE_SCENARIO: 'default'
+  artifacts:
+    paths:
+      - ansible_lint_ok
+    when: on_success
+    expire_in: 1 day
+  extends: .ansible_lint
+  allow_failure: True
+
+
+# Perform 'ansible-test sanity --docker' for all collections or just selected by git diff.
+ansible_test_sanity:
+  stage: lint_and_sanity
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG == null && $CI_COMMIT_REF_NAME != $MAIN_BRANCH &&
+      $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_TAG == null && 
+      $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $MAIN_BRANCH'
+  tags:
+    - ansible-lint
+    - docker
+  variables:
+    MOLECULE_SCENARIO: 'default'
+  artifacts:
+    paths:
+      - ansible_sanity_ok
+    when: on_success
+    expire_in: 1 day
+  extends: .ansible_test_sanity
+  allow_failure: True
+
+
+# Perform ansible molecule testing with kvm scenario (required libvirt) for all roles or just selected by git diff.
+molecule_kvm_changes:
+  stage: molecule_roles_testing
+  rules:
+    - if: '$CI_COMMIT_MESSAGE !~ /^(?i)WIP(.?)*/ && $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG == null &&
+      $CI_COMMIT_REF_NAME != $MAIN_BRANCH && $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
+      changes:
+        - ansible_collections/**/*
+      when: always
+  tags:
+    - ansible_molecule
+    - kvm
+  variables:
+    MOLECULE_SCENARIO: 'kvm'
+    TEST_SELECTION: 'diff'
+  extends: .molecule_roles_testing
+
+molecule_kvm_all:
+  stage: molecule_roles_testing
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_MESSAGE !~ /^(?i)WIP(.?)*/ &&
+      $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $MAIN_BRANCH && $CI_COMMIT_TAG == null'
+  tags:
+    - ansible_molecule
+    - kvm
+  variables:
+    MOLECULE_SCENARIO: 'kvm'
+    TEST_SELECTION: 'all'
+  extends: .molecule_roles_testing
+
+
+# Perform ansible molecule testing with default scenario (required docker) for all roles or just selected by git diff.
+molecule_default_changes:
+  stage: molecule_roles_testing
+  rules:
+    - if: '$CI_COMMIT_MESSAGE !~ /^(?i)WIP(.?)*/ && $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG == null &&
+      $CI_COMMIT_REF_NAME != $MAIN_BRANCH && $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
+      changes:
+        - ansible_collections/**/*
+      when: always
+  tags:
+    - ansible_molecule
+    - docker
+  variables:
+    MOLECULE_SCENARIO: 'default'
+    TEST_SELECTION: 'diff'
+  extends: .molecule_roles_testing
+
+molecule_default_all:
+  stage: molecule_roles_testing
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_MESSAGE !~ /^(?i)WIP(.?)*/ &&
+      $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $MAIN_BRANCH && $CI_COMMIT_TAG == null'
+  tags:
+    - ansible_molecule
+    - docker
+  variables:
+    MOLECULE_SCENARIO: 'default'
+    TEST_SELECTION: 'all'
+  extends: .molecule_roles_testing
+
+
+# Prepare ansible galaxy collection
+version_increment:
+  stage: prepare_collection
+  rules:
+    - if: '$CI_COMMIT_MESSAGE !~ /^(?i)WIP(.?)*/ && $CI_COMMIT_TAG == null && $CI_PIPELINE_SOURCE == "push" && 
+      $CI_COMMIT_REF_NAME == $DEVELOP_BRANCH && $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
+      changes:
+        - ansible_collections/**/*
+      when: always
+  tags:
+    - ansible-push
+  variables:
+    TEST_SELECTION: 'diff'
+    VERSION_INCREMENT_LEVEL: 'release'
+  extends: .semantic_version_increment
+
+
+# Update main branch with the latest changes
+merge_and_push:
+  stage: merge_to_main_branch
+  rules:
+    - if: '$CI_COMMIT_MESSAGE !~ /^(?i)WIP(.?)*/ && $CI_COMMIT_TAG == null && $CI_PIPELINE_SOURCE == "push" && 
+      $CI_COMMIT_REF_NAME == $DEVELOP_BRANCH && $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
+  tags:
+    - ansible-push
+  extends: .git_merge_to_main_branch
