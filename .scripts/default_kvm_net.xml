@@ -1,0 +1,11 @@
+<network>
+  <name>default</name>
+  <forward mode="nat"/>
+  <domain name="default"/>
+  <ip address="192.168.175.1" netmask="255.255.255.0">
+    <dhcp>
+      <range start="192.168.175.128" end="192.168.175.254"/>
+    </dhcp>
+  </ip>
+</network>
+
