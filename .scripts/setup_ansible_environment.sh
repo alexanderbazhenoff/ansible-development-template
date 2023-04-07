@@ -3,7 +3,7 @@
 
 ### Installs ansible pip and ansible_molecule testing dependencies
 
-# This Source Code Form is subject to the terms of the MIT License. If a copy of the MPL was not distributed with
+# This Source Code Form is subject to the terms of the MIT License. If a copy of the source was not distributed with
 # this file, You can obtain one at: https://github.com/alexanderbazhenoff/ansible-development-template/blob/main/LICENSE
 
 
