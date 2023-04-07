@@ -135,57 +135,57 @@ accepted").
 
 ```
 ansible_galaxy/
-├── namespace1                                                          # папка для ansible galaxy namespace 'namespace1'
-│         └── collection_name1                                          # папка для ansible-коллекции collection_name1
-│             ├── galaxy.yml                                            # метаданные для collection_name1
-│             ├── LICENSE                                               # файл-лицензия для collection_name1
-│             ├── playbooks                                             # папка для ansible-плейбуков в collection_name1
-│             │         ├── playbook1.yml                               # ansible-плейбук playbook1
-│             │         ├── playbook2.yml                               # ansible-плейбук playbook2
-│             │         └── inventory                                   # inventory файл (опционально)
-│             ├── README.md                                             # инфо файл для коллекции collection_name1
-│             ├── requirements.yml                                      # файл requirements для collection_name1
-│             ├── roles                                                 # папка для ansible-ролей
-│             │         ├── role_name1                                  # папка для ansible-роли role_name1
-│             │         │         ├── role_name1_example.yml            # playbook-пример для запуска роли (опционально)
-│             │         │         ├── meta                              # папка для meta-описание роли
-│             │         │         │         └── main.yml                # meta-описание роли в формате ansible galaxy
-│             │         │         ├── molecule                          # папка с ansible molecule сценариями
-│             │         │         │         └── default                 # папка default сценария ansible molecule
-│             │         │         │             ├── cleanup.yml         # clean-up stage для ansible molecule
-│             │         │         │             ├── converge.yml        # converge stage для ansible molecule
-│             │         │         │             ├── create.yml          # create stage для ansible molecule
-│             │         │         │             ├── Dockerfile.j2       # dockerfile для ansible molecule instance
-│             │         │         │             ├── INSTALL.rst         # описание подготовки окружения для тестирования
-│             │         │         │             ├── molecule.yml        # конфигурация сценария default для molecule
-│             │         │         │             ├── prepare.yml         # prepare stage для ansible molecule
-│             │         │         │             ├── requirements.txt    # pip requirements файл для тестирования
-│             │         │         │             ├── requirements.yml    # ansible molecule requirements файл
-│             │         │         │             ├── side_effect.yml     # side effect stage для ansible molecule
-│             │         │         │             ├── verify.yml          # verify stage для molecule (если не testinfra)
-│             │         │         │             └── tests               # диркетория с тестами для pytest-testinfra
-│             │         │         │                 └── test_default.py # тест для pytest-testinfra
-│             │         │         ├── README.md                         # файл-описания роли в формате markdown
-│             │         │         ├── LICENSE                           # лицензия для роли (если отличается от коллекции)
-│             │         │         ├── tasks                             # папка для tasks для роли role_name1
-│             │         │         │         └── main.yml                # main task для ароли role_name1
-│             │         │         └── tests                             # папка для ansible-test
-│             │         │             ├── inventory                     # файл inventory для ansible-test
-│             │         │             └── test.yml                      # плейбук для ansible-test
-│             │         │    
-│             │         ├── role_name2                                  # папка для role_name2
-│             │         │   └── ...
-│             │         └── ...
-│             │
-│             │── plugins                                               # папка для ansible плагинов 
-│             │   └── ...
-│             │
-│             └── tests                                                 # папка для тестов к плагинам
-│                 └── ...  
-│        
-├── namespace2                                                          # папка для ansible galaxy namespace 'namespace2'
-│         └── collection_name2                                          # папка для ansible-коллекции collection_name2
-│             └── ...
+├── namespace1                                              # папка для ansible galaxy namespace 'namespace1'
+│    └── collection_name1                                   # папка для ansible-коллекции collection_name1
+│        ├── galaxy.yml                                     # метаданные для collection_name1
+│        ├── LICENSE                                        # файл-лицензия для collection_name1
+│        ├── playbooks                                      # папка для ansible-плейбуков в collection_name1
+│        │       ├── playbook1.yml                          # ansible-плейбук playbook1
+│        │       ├── playbook2.yml                          # ansible-плейбук playbook2
+│        │       └── inventory                              # inventory файл (опционально)
+│        ├── README.md                                      # инфо файл для коллекции collection_name1
+│        ├── requirements.yml                               # файл requirements для collection_name1
+│        ├── roles                                          # папка для ansible-ролей
+│        │       ├── role_name1                             # папка для ansible-роли role_name1
+│        │       │       ├── role_name1_example.yml         # playbook-пример для запуска роли (опционально)
+│        │       │       ├── meta                           # папка для meta-описание роли
+│        │       │       │    └── main.yml                  # meta-описание роли в формате ansible galaxy
+│        │       │       ├── molecule                       # папка с ansible molecule сценариями
+│        │       │       │    └── default                   # папка default сценария ansible molecule
+│        │       │       │         ├── cleanup.yml          # clean-up stage для ansible molecule
+│        │       │       │         ├── converge.yml         # converge stage для ansible molecule
+│        │       │       │         ├── create.yml           # create stage для ansible molecule
+│        │       │       │         ├── Dockerfile.j2        # dockerfile для ansible molecule instance
+│        │       │       │         ├── INSTALL.rst          # описание подготовки окружения для тестирования
+│        │       │       │         ├── molecule.yml         # конфигурация сценария default для molecule
+│        │       │       │         ├── prepare.yml          # prepare stage для ansible molecule
+│        │       │       │         ├── requirements.txt     # pip requirements файл для тестирования
+│        │       │       │         ├── requirements.yml     # ansible molecule requirements файл
+│        │       │       │         ├── side_effect.yml      # side effect stage для ansible molecule
+│        │       │       │         ├── verify.yml           # verify stage для molecule (если не testinfra)
+│        │       │       │         └── tests                # диркетория с тестами для pytest-testinfra
+│        │       │       │              └── test_default.py # тест для pytest-testinfra
+│        │       │       ├── README.md                      # файл-описания роли в формате markdown
+│        │       │       ├── LICENSE                        # лицензия для роли (если отличается от коллекции)
+│        │       │       ├── tasks                          # папка для tasks для роли role_name1
+│        │       │       │      └── main.yml                # main task для ароли role_name1
+│        │       │       └── tests                          # папка для ansible-test
+│        │       │            ├── inventory                 # файл inventory для ansible-test
+│        │       │            └── test.yml                  # плейбук для ansible-test
+│        │       │    
+│        │       ├── role_name2                             # папка для role_name2
+│        │       │    └── ...
+│        │       └── ...
+│        │
+│        │── plugins                                        # папка для ansible плагинов 
+│        │    └── ...
+│        │
+│        └── tests                                          # папка для тестов к плагинам
+│             └── ...  
+│   
+├── namespace2                                              # папка для ansible galaxy namespace 'namespace2'
+│    └── collection_name2                                   # папка для ansible-коллекции collection_name2
+│         └── ...
 └── ...
 ```
 ### Galaxy Namespace
