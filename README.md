@@ -43,53 +43,54 @@ testing scenarios and/or will be able to run in parallel.
 3. Paste your Project Access Token (`Project -> Settings -> Access Tokens ) to `GITLAB_TOKEN` variable in 
 [.gitlab-ci.yml](.gitlab-ci.yml) file.
 4. Set-up nodes with GitLab runners and add them to the project with the next tags:
-  - `ansible-lint` and `docker` for ansible lint and sanity tests. Optionally setup single `ansible-lint` node to 
-  perform only ansible lint on separate node.
-  - `ansible_molecule` and `docker` with docker installed to perform default docker scenario of 
-  [ansible molecule](https://molecule.readthedocs.io/en/latest/) testing.
-  - `ansible_molecule` and `kvm` with [kvm](https://en.wikipedia.org/wiki/Kernel-based_Virtual_Machine) installed to
-  perform default docker scenario of [ansible molecule](https://molecule.readthedocs.io/en/latest/) testing.
-  - `ansible-push` any node with GitLab runner with [GitLab ssh keys](https://docs.gitlab.com/ee/user/ssh.html) to
-  perform automated pushes. You should also create a special user for, e.g. `Ansible CI`.
-
+   - `ansible-lint` and `docker` for ansible lint and sanity tests. Optionally setup single `ansible-lint` node to 
+   perform only ansible lint on separate node.
+   - `ansible_molecule` and `docker` with docker installed to perform default docker scenario of 
+   [ansible molecule](https://molecule.readthedocs.io/en/latest/) testing.
+   - `ansible_molecule` and `kvm` with [kvm](https://en.wikipedia.org/wiki/Kernel-based_Virtual_Machine) installed to
+   perform default docker scenario of [ansible molecule](https://molecule.readthedocs.io/en/latest/) testing.
+   - `ansible-push` any node with GitLab runner with [GitLab ssh keys](https://docs.gitlab.com/ee/user/ssh.html) to
+   perform automated pushes. You should also create a special user for, e.g. `Ansible CI`.
 5. Don't forget to install python on your GitLab runners under your `gitlab-runner` user. Most molecule and other 
-related modules requires access under user without sudo. Read 'contributing' template files for more information how to 
+related modules requires access under user without sudo. Read 'contributing' template file for more information how to 
 set your environment. If you wish to use later than python3.9 you also need to create `requirements*.txt` files in the
 [.scripts](.scripts) folder.
 6. Set-up `PIP_REQUIREMENTS` variable in [.gitlab-ci.yml](.gitlab-ci.yml) to `yes` for the first run to install all 
 python pip requirements, but you should be ready to install some of them if broken. Switch this variable back to `no`,
 this will decrease testing time.
-7. Create branch with your first changes to push in. When you push with `wip` commit message no molecule testing 
-available, just only credentials check, sanity and lint. Read 'contributing' file(s) how to develop according to ansible
-galaxy standards.
-8. When you finish merge your changes to develop branch, whis will start testing of all collections and roles both kvm 
-and default (docker) scenarios. When you merge your branch into develop branch testing will start again. This time only
+7. Replace this README file to yours according to your project contents.
+8. Create branch with your first changes to push in. When you push with `WIP` commit message no molecule testing will be 
+performed, just only credentials check, sanity and lint. Read 'contributing' file(s) how to develop according to ansible
+galaxy standards. On push only changes will be tested, but if you create a merge request all project roles will be 
+tested once again in parallel. Create merge request only when you complete working with your own branch. 
+9. When you finish merge your changes to develop branch, testing of all collections and roles both kvm and default
+(docker) scenarios will start. When you merge your branch into develop branch testing will start again. This time only
 changes will be tested (like you're pushing in your working branch). At the end CI will change collection version(s)
 with changes and push them to main branch.
 
 ### Contents
 
 ```
-├── .scripts                                         - folder for CI scripts
-│         ├── ansible_lint.sh                        - ansible lint script
-│         ├── default_kvm_net.xml                    - settings for default KVM network which is required
-│         ├── inventory_credentials_checker.sh       - inventory credentials checker script
-│         ├── perform_ansible_testing.sh             - testing script (sanity, molecule) also version increment and push
-│         ├── python_3.8_default_requirements.txt    - python 3.8 requirements for default ansible molecule scenario
-│         ├── python_3.8_kvm_requirements.txt        - python 3.8 requirements for kvm ansible molecule scenario
-│         ├── python_3.9_default_requirements.txt    - python 3.9 requirements for default ansible molecule scenario
-│         ├── python_3.9_kvm_requirements.txt        - python 3.8 requirements for kvm ansible molecule scenario
-│         └── setup_ansible_environment.sh           - set-up ansible enviromnent script
+├── .scripts                                   - folder for CI scripts
+│     ├── ansible_lint.sh                      - ansible lint script
+│     ├── default_kvm_net.xml                  - settings for default KVM network
+│     ├── inventory_credentials_checker.sh     - inventory credentials checker script
+│     ├── perform_ansible_testing.sh           - testing script, version increment and push
+│     ├── python_3.8_default_requirements.txt  - python3.8 requirements for default molecule scenario
+│     ├── python_3.8_kvm_requirements.txt      - python3.8 requirements for kvm molecule scenario
+│     ├── python_3.9_default_requirements.txt  - python3.9 requirements for default molecule scenario
+│     ├── python_3.9_kvm_requirements.txt      - python3.8 requirements for kvm molecule scenario
+│     └── setup_ansible_environment.sh         - set-up ansible enviromnent script
 │
-├── ansible_collections                              - example of ansible collection(s) folder structure
-│         ├── ...
-│         ...
+├── ansible_collections                        - example of ansible collection(s) folder structure
+│     ├── ...
+│     ...
 │
-├── .ansible-lint                                    - ansible-lint settings for the whole collections (project)
-├── .gitignore                                       - gitignore file
-├── gitlab-ci.yml                                    - GitLab CI file
-├── .yamllint                                        - yamllint settings for the whole collections (project)
-├── CONTRIBUTING_template_rus.md                     - CONTRIBUTING.md project template (Russian) (English comming soon)
-├── LICENSE                                          - LICENSE file
-└── README.md                                        - this file
+├── .ansible-lint                              - ansible-lint settings for the whole collections
+├── .gitignore                                 - gitignore file
+├── gitlab-ci.yml                              - GitLab CI file
+├── .yamllint                                  - yamllint settings for the whole collections
+├── CONTRIBUTING_template_rus.md               - CONTRIBUTING.md project template (ru)
+├── LICENSE                                    - LICENSE file
+└── README.md                                  - this file
 ```
