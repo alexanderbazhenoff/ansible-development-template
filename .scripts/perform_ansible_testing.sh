@@ -4,7 +4,7 @@
 # Perform ansible testing or collection(s) version(s) (semantic) increment for ansible CI
 # or put your .skip_molecule_default or .skip_molecule_kvm into role directory to skip molecule role testing.
 
-# Copyright (c) 2022-2023 Alexander Bazhenov
+# Copyright (c) 2022-2023 Aleksandr Bazhenov
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
