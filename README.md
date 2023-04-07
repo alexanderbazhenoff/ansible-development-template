@@ -71,26 +71,26 @@ with changes and push them to main branch.
 ### Contents
 
 ```
-├── .scripts                                   - folder for CI scripts
-│     ├── ansible_lint.sh                      - ansible lint script
-│     ├── default_kvm_net.xml                  - settings for default KVM network
-│     ├── inventory_credentials_checker.sh     - inventory credentials checker script
-│     ├── perform_ansible_testing.sh           - testing script, version increment and push
-│     ├── python_3.8_default_requirements.txt  - python3.8 requirements for default molecule scenario
-│     ├── python_3.8_kvm_requirements.txt      - python3.8 requirements for kvm molecule scenario
-│     ├── python_3.9_default_requirements.txt  - python3.9 requirements for default molecule scenario
-│     ├── python_3.9_kvm_requirements.txt      - python3.8 requirements for kvm molecule scenario
-│     └── setup_ansible_environment.sh         - set-up ansible enviromnent script
+├── .scripts                                 - folder for CI scripts
+│   ├── ansible_lint.sh                     - ansible lint script
+│   ├── default_kvm_net.xml                 - settings for default KVM network
+│   ├── inventory_credentials_checker.sh    - inventory credentials checker script
+│   ├── perform_ansible_testing.sh          - testing script, version increment and push
+│   ├── python_3.8_default_requirements.txt - python3.8 requirements for default molecule scenario
+│   ├── python_3.8_kvm_requirements.txt     - python3.8 requirements for kvm molecule scenario
+│   ├── python_3.9_default_requirements.txt - python3.9 requirements for default molecule scenario
+│   ├── python_3.9_kvm_requirements.txt     - python3.8 requirements for kvm molecule scenario
+│   └── setup_ansible_environment.sh        - set-up ansible enviromnent script
 │
-├── ansible_collections                        - example of ansible collection(s) folder structure
-│     ├── ...
+├── .ansible_collections                    - example of ansible collection(s) folder structure
+│   ├── ...
 │     ...
 │
-├── .ansible-lint                              - ansible-lint settings for the whole collections
-├── .gitignore                                 - gitignore file
-├── gitlab-ci.yml                              - GitLab CI file
-├── .yamllint                                  - yamllint settings for the whole collections
-├── CONTRIBUTING_template_rus.md               - CONTRIBUTING.md project template (ru)
-├── LICENSE                                    - LICENSE file
-└── README.md                                  - this file
+├── .ansible-lint                           - ansible-lint settings for the whole collections
+├── .gitignore                              - gitignore file
+├── gitlab-ci.yml                           - GitLab CI file
+├── .yamllint                               - yamllint settings for the whole collections
+├── CONTRIBUTING_template_rus.md            - CONTRIBUTING.md project template (ru)
+├── LICENSE                                 - LICENSE file
+└── README.md                               - this file
 ```
