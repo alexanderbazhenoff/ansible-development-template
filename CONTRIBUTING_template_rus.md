@@ -16,7 +16,7 @@
 ansible, рано или поздно должно устанавливаться, или настраиваться с помощью ansible. Для упрощения запуска могут быть
 использованы wrappers в виде [jenkins pipelines](https://www.jenkins.io/pipeline/getting-started-pipelines/). 
 2. Работа с gitlab-репозиторием и весь процесс разработки должны осуществляться согласно правилам, изложенным в пункте
-["Работа с gitlab проектом"](#работа-с-gitlab-проектом).
+["Работа с gitlab проектом"](#работа-с-gitlabgithub-проектом).
 3. Содержание данного gitlab-репозитория должно быть сохранено согласно правилам изложенным в пункте
 ["Требования к структуре и контенту проекта"](#требования-к-структуре-и-контенту-проекта).
 
@@ -92,15 +92,22 @@ ansible-фактов (например: `ansible_distribution` и `ansible_distr
 6. Все тесты должны работать в актуальном окружении, настроенном на системе, где создаются instances (см. 
 ["Установка и настройка окружения ansible и molecule ansible"](#установка-и-настройка-окружения-ansible-и-molecule-ansible)).
 
-## Работа с gitlab проектом
+## Работа с GitLab/GitHub проектом
 
-После
-получения исходников создается новая ветка вида `f_NNNNNN`, или `b_NNNNNN`, где `NNNNN` - номер задачи в redmine. По 
-завершении работы над задачей создается Merge Request в дефолтную ветку ('devel', или 'develop') и назначается на 
+В первую очередь, если это не сделано до работы с репозиторием необходимо настроить ssh ключи:
+
+- [Создание нового ключа SSH и его добавление в ssh-agent](https://docs.github.com/ru/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
+- [Use SSH keys to communicate with GitLab](https://docs.gitlab.com/ee/user/ssh.html).
+- [Добавление нового ключа SSH в учетную запись GitHub](https://docs.github.com/ru/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
+
+Тогда как сам процесс разработки и внесения изменений в GitLab во многом схож с GitHub. 
+
+После получения исходников создается новая ветка вида `f_NNNNNN`, или `b_NNNNNN`, где `NNNNN` - номер задачи в redmine. 
+По завершении работы над задачей создается Merge Request в дефолтную ветку ('devel', или 'develop') и назначается на 
 Maintainer'ов. В заголовке Merge Request'а коротко и предельно понятно указывают, что было изменено, или над чем велась 
 работа. Опционально можно в скобках указать номер задачи в redmine. Все остальные подробности о проведенных работах 
 указываются в описании (Description). Все commits squash'атся (Squash commits when merge request is accepted), а ветка в
-которой велась работа (при условии, что она закончена) удаляется (опция "emove source branch when merge request is 
+которой велась работа (при условии, что она закончена) удаляется (опция "remove source branch when merge request is 
 accepted").
 
 Далее maintainer'ы проверяют изменения и пишут замечания по исправлению тем, кто работал над задачей (изменениями).
@@ -252,9 +259,9 @@ role_dir#> molecule init role role_name
 ### ansible playbooks
 
 Как правило, [ansible playbooks](https://docs.ansible.com/ansible/latest/user_guide/playbooks.html) в данном проекте
-являются неким собирательным сценарием вызывающем одну несколько ролей, или производящий группу разных действий, которые
+являются неким собирательным сценарием вызывающем несколько ролей, или производящий группу разных действий, которые
 невозможно, или не имеет смысла объединять в одну ansible роль. Могут так же выполнять некоторые простейшие действия. Во
-всех остальных случая лучше использовать структуру ansible ролей.
+всех остальных случаях лучше использовать структуру ansible ролей.
 
 ### ansible inventory
 
@@ -408,11 +415,10 @@ python3 -m pip uninstall ansible-core
 ```bash
 python3 -m pip uninstall ansible ansible-base ansible-compat ansible-lint
 ```
-Если python3 установлен через altinstall и в пользовательскую директорию, то все ansible и ansible molecule 
-окружение устанавливается с ключем `--user` (актуально, кроме системных пакетов, таких как, например, selinux - они
-ставятся без ключа). Так же при установке от пользователя необходимо учитывать значение перменной PATH в зависимости от
-используемой оболочки (bash, tcsh, zsh). Например, для [zsh](https://www.zsh.org/) в конец файла`~/.zshrc` необходимо
-добавить:
+Если python3 установлен через altinstall в пользовательскую директорию, то все ansible и ansible molecule окружение
+устанавливается с ключом `--user` (актуально, кроме системных пакетов, таких как, например, selinux - они ставятся без
+ключа). Так же при установке от пользователя необходимо учитывать значение переменной PATH в зависимости от используемой
+оболочки (bash, tcsh, zsh). Например, для [zsh](https://www.zsh.org/) в конец файла`~/.zshrc` необходимо добавить:
 ```bash
 export PATH=$PATH:$HOME/.local/bin/
 ```
