@@ -469,9 +469,9 @@ python3 -m pip install --user "molecule[delegated]==3.6.1"
 python3 -m pip install --user "molecule[ansible-lint]"
 python3 -m pip install --user "molecule[docker]"
 ```
-В зависимости от версий python и pip дефолтные версии могут отличаться, что, например, в случае с `molecule[delegated]`
-может привести к проблемам с подключением к docker images при запуске тестов. Поэтому указанные ниже версии являются
-проверенными и работоспособными:
+В зависимости от версий python и pip дефолтные версии требуемых для окружения пакетов могут отличаться, что, например, в
+случае с `molecule[delegated]` может привести к проблемам с подключением к docker images при запуске тестов. Поэтому 
+указанные ниже версии являются проверенными и работоспособными:
 ```
 $ molecule --version                                                                                                                                                                                                                                               
 molecule 3.6.1 using python 3.9 
@@ -482,7 +482,7 @@ molecule 3.6.1 using python 3.9
 ```
 
 Так же необходимо, чтобы в системе был [установлен Docker Engline CE](https://docs.docker.com/engine/install/) и
-пользователь, под которым производится тестирование, добавлен в группу docker:
+пользователь, под которым производится тестирование, добавлен в группу `docker`:
 ```bash
 sudo usermod -aG docker $(whoami)
 ```
