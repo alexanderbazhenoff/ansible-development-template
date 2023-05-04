@@ -109,8 +109,8 @@ ansible-фактов (например: `ansible_distribution` и `ansible_distr
 После получения исходников в репозитории [GitLab](https://docs.gitlab.com/) создается новая ветка вида `f_NNNNNN`,
 или `b_NNNNNN`, где `NNNNN` - номер задачи в используемом task tracker'е. По завершении работы над задачей создается 
 Merge Request в дефолтную ветку ('devel', или 'develop') и назначается на Maintainer'ов. В заголовке Merge Request'а 
-коротко и предельно понятно указывают, что было изменено, или над чем велась работа. Опционально в скобках можно указать
-номер задачи в task tracker'е, например:
+коротко и понятно указывают, что было изменено, или над чем велась работа. Опционально в скобках можно указать номер
+задачи в task tracker'е, например:
 
 > Postgresql installation on Ubuntu has been fixed (b_1234)
 
@@ -268,7 +268,7 @@ ansible-galaxy collection install $(ls -1 | grep ".tat.gz") -r ./requirements.ym
 ```bash
 role_dir#> ansible-galaxy init role_name
 ```
-Так же возможная и инициализация с помощью molecule:
+Но инициализация через команду molecule позволяет дополнительно создать еще и
 [структуру для ansible molecule testing](#Структура-ansible-molecule-тестов):
 ```bash
 role_dir#> molecule init role role_name
@@ -311,8 +311,8 @@ tests в каждой из ролей не требуются.
 ### Структура ansible molecule тестов
 
 [Ansible molecule](https://molecule.readthedocs.io/en/latest/index.html) используется для тестирования ролей 
-предоставляет возможность проводить тестирование роли в нескольких сценариях, в каждом из которых могут быть определены 
-определенные условия. Например, как в данном проекте:
+предоставляет возможность проводить тестирование роли в нескольких сценариях, в каждом из которых тестирование может 
+быть произведено в определенном окружении. Например, как в данном проекте:
 - **default**. Используется для тестирования ролей внутри
 [docker-контейнеров](https://www.docker.com/resources/what-container/). В `molecule.yml` данного сценария 
 указывается molecule драйвер 'docker' (в будущих версиях molecule - 
