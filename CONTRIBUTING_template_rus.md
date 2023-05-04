@@ -79,7 +79,8 @@ ansible-фактов (например: `ansible_distribution` и `ansible_distr
    расположения в коллекции (в виде исключения допускаются лишь тесты роли), допускается размещение одинаковых файлов
    внутри каждой роли, например: драйвера molecule test'ов (molecule-libvirt-delegated), dockerfile'ов и т.д.
 10. Любая ansible Galaxy коллекция из этого репозитория должна собираться для последующей установки из директории этой
-    коллекции в данном репозитории (команда `ansible-galaxy build`, см. [["ansible collections"](#ansible-collections)).
+    коллекции в данном репозитории (команда `ansible-galaxy collection build`, см.
+    [["ansible collections"](#ansible-collections)).
 
 ## Правила написания ansible molecule тестов
 
@@ -217,9 +218,9 @@ ansible_galaxy/
 В качестве имени для ansible [Galaxy Namespace](https://galaxy.ansible.com/docs/contributing/namespaces.html), как
 правило, выбирается автор, публикующая компания, компания или подразделение (например,
 [community](https://docs.ansible.com/ansible/latest/collections/community/index.html), или
-[ansible](https://docs.ansible.com/ansible/latest/collections/ansible/index.html)). Что касаемо данного проекта, то
-для namespace может быть так же выбран и некий атрибут, признак, или свойство, объединяющее ansible-коллекции (например,
-часто используемые роли из разных источников - [common](ansible_collections/common/linux)).
+[ansible](https://docs.ansible.com/ansible/latest/collections/ansible/index.html)). В качестве namespace может быть так
+же выбран и некий атрибут, признак, или свойство, объединяющее ansible-коллекции: например, часто используемые роли из 
+разных источников - `common` (путь `ansible_collections/common/linux`).
 
 ### ansible collections
 
@@ -261,13 +262,13 @@ ansible-galaxy collection install $(ls -1 | grep ".tat.gz") -r ./requirements.ym
 В качестве имени для [ansible-ролей](https://docs.ansible.com/ansible/latest/user_guide/playbooks_reuse_roles.html)
 выбирается непосредственно то, что эта роль настраивает, или устанавливает. Если роль позволяет выбрать функционал, или
 технологию, то название необходимо выбирать в соответствии с максимальным функционалом: например, если роль позволяет
-установить как lxc, так и lxcfs, то роль следует назвать ["lxcfs"](ansible_collections/common/linux/roles/lxcfs).
+установить как lxc, так и lxcfs, то роль следует назвать **"lxcfs"** (`ansible_collections/common/linux/roles/lxcfs`).
 
-Для создания структуры для роли можно использовать команду:
+Для инициализации роли (создание структуры: всех каталогов и файлов-примеров) можно использовать команду:
 ```bash
 role_dir#> ansible-galaxy init role_name
 ```
-Однако инициализация структуры через команду molecule позволит так же создать
+Так же возможная и инициализация с помощью molecule:
 [структуру для ansible molecule testing](#Структура-ansible-molecule-тестов):
 ```bash
 role_dir#> molecule init role role_name
@@ -277,8 +278,8 @@ role_dir#> molecule init role role_name
 
 Как правило, [ansible playbooks](https://docs.ansible.com/ansible/latest/user_guide/playbooks.html) в данном проекте
 являются неким собирательным сценарием вызывающем несколько ролей, или производящий группу разных действий, которые
-невозможно, или не имеет смысла объединять в одну ansible роль. Могут так же выполнять некоторые простейшие действия. Во
-всех остальных случаях лучше использовать структуру ansible ролей.
+невозможно, или не имеет смысла объединять в одну ansible роль. Playbook'и могут так же выполнять некоторые простейшие
+действия. Во всех остальных случаях лучше использовать структуру ansible ролей.
 
 ### ansible inventory
 
@@ -286,30 +287,32 @@ role_dir#> molecule init role role_name
 проекте для хранения описания всех хостов и их групп. Может так же быть создан внутри роли, или в той же папке, что 
 и ansible playbook, для тестирования ansible роли при её написании и для ansible playbook соответственно. Удобней всего
 ansible inventory с описанием инфраструктуры хранить вне коллекций, так как упрощается доступ при использовании ansible
-playbook'ов и ролей отдельно от jenkins pipeline'ов.
+playbook'ов и ролей отдельно от Jenkins pipeline wrapper'ов.
 
 ### ansible modules
 
 При необходимости в ansible-коллекцию 
 [могут быть добавлены](https://docs.ansible.com/ansible/latest/dev_guide/developing_locally.html#modules-vs-plugins)
-и [ansible-модули](https://docs.ansible.com/ansible/latest/plugins/module.html). Вероятней всего, для их тестирования
-уже потребуется [ansible-test](https://docs.ansible.com/ansible/latest/dev_guide/testing.html), что потребует изменений
-в [Gitlab CI данного проекта](#ci-проекта).
+и [ansible-модули](https://docs.ansible.com/ansible/latest/plugins/module.html). Для их тестирования
+потребуется [ansible-test](https://docs.ansible.com/ansible/latest/dev_guide/testing.html), что в свою очередь потребует
+изменений [Gitlab CI данного проекта](#ci-проекта).
 
 ### ansible test
 
-Папка `test/` внутри папки роли, как правило, создается при создании структуры самой роли (однако для тестирования ролей
-используется [ansible molecule](#Структура-ansible-molecule-тестов)), тогда как одноименная папка внутри коллекции уже
-может быть использована для
+Папка `test/` внутри папки роли, как правило, создается при создании структуры самой роли (но в 
+[прилагаемом CI](#ci-проекта) для тестирования ролей используется
+[ansible molecule](#Структура-ansible-molecule-тестов)), тогда как одноименная папка внутри коллекции уже может быть
+использована для
 [других видов тестирования](https://docs.ansible.com/ansible/latest/dev_guide/testing.html#types-of-tests). В первом
 случае папку после автоматического её создания можно не удалять, тогда как во втором случае создавать ее следует по
-необходимости.
+необходимости. [CI данного проекта](#ci-проекта) в одной из стадий запускает ansible sanity tests, для которого папки
+tests в каждой из ролей не требуются.
 
 ### Структура ansible molecule тестов
 
-[Ansible molecule](https://molecule.readthedocs.io/en/latest/index.html) используется для тестирования ролей (но
-теоретически возможно так же и тестирование playbooks) и предлагает возможность тестирования в нескольких сценариях,
-в каждом из которых могут быть определены определенные условия. Например, как в данном проекте:
+[Ansible molecule](https://molecule.readthedocs.io/en/latest/index.html) используется для тестирования ролей 
+предоставляет возможность проводить тестирование роли в нескольких сценариях, в каждом из которых могут быть определены 
+определенные условия. Например, как в данном проекте:
 - **default**. Используется для тестирования ролей внутри
 [docker-контейнеров](https://www.docker.com/resources/what-container/). В `molecule.yml` данного сценария 
 указывается molecule драйвер 'docker' (в будущих версиях molecule - 
@@ -322,11 +325,11 @@ playbook'ов и ролей отдельно от jenkins pipeline'ов.
 использовать этот драйвер, в папку kvm-сценария `molecule/kvm` следует поместить содержимое
 [данного репозитория](https://github.com/geropizarro/molecule-libvirt-delegated) без папки `tests` (если 
 [Pull Request](https://github.com/geropizarro/molecule-libvirt-delegated/pull/3) все еще не принят, то поместить fork).
-Так же можно скопировать из другой роли, изменив под свою задачу.
+Так же папку `molecule/kvm` можно скопировать из другой роли, изменив под свою задачу.
 
-Если kvm сценарий является опциональным, то default является обязательным. Если тестировать роль с помощью docker не
-возможно, то в папку со сценарием помещается create.yml (без tasks, но с header'ом), а так же`molecule.yml` следующего
-содержания:
+Если kvm сценарий является опциональным, то default является обязательным. Если провести тестирование роли внутри 
+docker не возможно, то в папку со сценарием помещается create.yml (без tasks, но с header'ом), 
+а так же`molecule.yml` следующего содержания:
 
 ```yaml
 
@@ -356,6 +359,7 @@ lint: |
     yamllint .
     ansible-lint .
 ```
+Таким образом, в сценарии `default` будут проверены зависимости и синтаксис.
 
 **Тестирование ролей с помощью ansible molecule непосредственно на хостовой системе недопустимо** - используйте docker,
 или виртуальные машины KVM.
@@ -389,8 +393,8 @@ verifyer'а в `molecule.yml` указывается testinfra). С пример
 то в стадию lint так же добавляется проверка синтаксиса python скриптов с помощью
 [flake8](https://flake8.pycqa.org/en/latest/), а в папку с ролью помещается файл настроек `.flake8`.
 - [**side_effect**](https://molecule.readthedocs.io/en/latest/usage.html#side-effect). (playbook по умолчанию:
-`side_effect.yml`). Внесение в тестирование некого random factor'а: применение изменений перед, или после применения роли
-(тест на стабильность), изменение условий тестирования, или каких-либо параметров, с которыми будет вызвана роль.
+`side_effect.yml`). Внесение в тестирование некого random factor'а: применение изменений перед, или после применения 
+роли (тест на стабильность), изменение условий тестирования, или каких-либо параметров, с которыми будет вызвана роль.
 - [**idempotence**](https://molecule.readthedocs.io/en/latest/usage.html#idempotence). Фактически является тестом на
 корректность получаемого при выполнении роли параметра `changed_when` для каждого шага при двукратном вызове converge:
 если при повторном вызове роли хотя бы в одном шаге будет получен `changed_when: True`, то тест не пройдет. В данном
@@ -424,7 +428,7 @@ python3 -m pip install whell setuptools ansible==2.10.7 ansible-lint==5.4.0
 Обратите внимание, что пакет ansible-base, необходимый для ansible версии 2.10.x, конфликтует с ansible-core, 
 необходимым для более новых версий ansible. Учитывайте эту особенность зависимостей при переходе проекта на 
 [более новые версии](https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html). В 
-противном случае пакет конфликт можно разрешить с помощью удаления пакета ansible core:
+противном случае конфликт можно разрешить с помощью удаления пакета ansible core:
 ```bash
 python3 -m pip uninstall ansible-core
 ```
@@ -434,7 +438,10 @@ python3 -m pip uninstall ansible ansible-base ansible-compat ansible-lint
 ```
 Если python3 установлен через altinstall в пользовательскую директорию, то все ansible и ansible molecule окружение
 устанавливается с ключом `--user` (актуально, кроме системных пакетов, таких как, например, selinux - они ставятся без
-ключа). Так же при установке от пользователя необходимо учитывать значение переменной PATH в зависимости от используемой
+ключа). Драйверы molecule (такие, как, например, `molecule[docker]`) устанавливаются всегда с ключом `--user` вне 
+зависимости от способа установки python.
+
+Так же при установке от пользователя необходимо учитывать значение переменной PATH в зависимости от используемой
 оболочки (bash, tcsh, zsh). Например, для [zsh](https://www.zsh.org/) в конец файла`~/.zshrc` необходимо добавить:
 ```bash
 export PATH=$PATH:$HOME/.local/bin/
