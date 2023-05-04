@@ -2,8 +2,18 @@
 
 ### Gitlab CI for ansible collections. Performs various lint, sanity checks and then molecule testing. ###
 
-# This Source Code Form is subject to the terms of the MIT License. If a copy of the source was not distributed with
-# this file, You can obtain one at: https://github.com/alexanderbazhenoff/ansible-development-template/blob/main/LICENSE
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+# persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 # Variables:
@@ -12,15 +22,16 @@
 # SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_PATH: Relative folder name for molecule requirements*.txt files.
 # SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_NAME: Set-up ansible environment script (see PIP_REQUIREMENTS).
 # PIP_REQUIREMENTS: pip requirements. 'yes' if you would like to install them every tests running.
-# ANSIBLE_LINT_SCRIPT_PATH: Relative path for ansible lint script.
-# INVENTORY_CHECKER_SCRIPT_PATH: Relative path for inventory checker script.!reference:
-# ANSIBLE_TESTING_SCRIPT_FULL_PATH: Relative path for main testing script.!reference:
-# SHELL_CHECK_PATH: Path to perform shellcheck.!reference:
+# ANSIBLE_LINT_SCRIPT_PATH: Relative path to ansible lint script.
+# INVENTORY_CHECKER_SCRIPT_PATH: Relative path to inventory checker script.
+# ANSIBLE_TESTING_SCRIPT_FULL_PATH: Relative path to main testing script.
+# SHELL_CHECK_PATH: Path to perform shellcheck.
 # SHELL_CHECK_SHELL_NAME: Shell-name for shellcheck: https://www.shellcheck.net/
-# SHELL_CHECK_OUTPUT: Shellcheck output format.!reference:
+# SHELL_CHECK_OUTPUT: Shellcheck output format.
 # KVM_IMAGES_PATH: Path of kvm images for molecule testing on kvm-related GitLab runner.
 # DEVELOP_BRANCH: Branch to merge all changes that trigger CI testing.
-# MAIN_BRANCH: Branch to push all changes after CI testing pass. Actually a branch you run all your ansible roles from.
+# MAIN_BRANCH: Branch to push all changes after CI testing pass. Actually, a branch you run all your ansible roles from.
+
 
 variables:
   GITLAB_TOKEN: '********************'
