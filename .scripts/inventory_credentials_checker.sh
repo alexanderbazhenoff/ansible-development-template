@@ -4,7 +4,7 @@
 # Credentials checker in ansible inventory .ini files for ansible CI
 # (warn and fails on forgotten credentials and/or passwords find)
 
-# Copyright (c) 2022-2023 Aleksandr Bazhenov
+# Copyright (c) 2022 Aleksandr Bazhenov
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
