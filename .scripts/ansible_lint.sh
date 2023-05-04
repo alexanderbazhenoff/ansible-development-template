@@ -5,6 +5,7 @@
 #
 # Usage: './ansible_lint.sh [lint mode]' (where: lint mode=all|diff)
 
+
 # Copyright (c) 2022 Aleksandr Bazhenov
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated

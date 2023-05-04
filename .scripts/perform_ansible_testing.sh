@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 
-# Perform ansible testing or collection(s) version(s) (semantic) increment for ansible CI
-# or put your .skip_molecule_default or .skip_molecule_kvm into role directory to skip molecule role testing.
+# Credentials checker in ansible inventory .ini files for ansible CI
+# (warn and fails on forgotten credentials and/or passwords find)
+
 
 # Copyright (c) 2022 Aleksandr Bazhenov
 
