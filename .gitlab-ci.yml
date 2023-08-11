@@ -19,6 +19,7 @@
 # Variables:
 #
 # GITLAB_TOKEN: Project Access Tokens (required for automated version increment pushes): Settings -> Access Tokens.
+# GITLAB_URL: URL of your GitLab server (local or global).
 # SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_PATH: Relative folder name for molecule requirements*.txt files.
 # SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_NAME: Set-up ansible environment script (see PIP_REQUIREMENTS).
 # PIP_REQUIREMENTS: pip requirements. 'yes' if you would like to install them every tests running.
@@ -35,6 +36,7 @@
 
 variables:
   GITLAB_TOKEN: '********************'
+  GITLAB_URL: "gitlab.com"
   SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_PATH: '.scripts/'
   SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_NAME: 'setup_ansible_environment.sh'
   PIP_REQUIREMENTS: 'no'
@@ -100,7 +102,7 @@ variables:
     - git checkout ${MAIN_BRANCH}
     - git pull
     - git merge "origin/${DEVELOP_BRANCH}" -m "${CI_COMMIT_MESSAGE}"
-    - git push http://oauth2:${GITLAB_TOKEN}@gitlab.emzior/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git ${MAIN_BRANCH}
+    - git push http://oauth2:${GITLAB_TOKEN}@${GITLAB_URL}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git ${MAIN_BRANCH}
 
 
 stages:
@@ -126,7 +128,7 @@ pre_check:
     - shellcheck -f ${SHELL_CHECK_OUTPUT} -s ${SHELL_CHECK_SHELL_NAME} ${SHELL_CHECK_PATH}
 
 
-# Perform inventory files check for login/password specified
+# Perform inventory files check for login/password specified.
 credentials_check:
   stage: lint_and_sanity
   rules:
@@ -138,7 +140,7 @@ credentials_check:
     - .${INVENTORY_CHECKER_SCRIPT_PATH}
 
 
-# Perform ansible-lint on all project or just git diff
+# Perform ansible-lint on the whole project or just git diff.
 ansible_lint:
   stage: lint_and_sanity
   rules:
@@ -212,7 +214,7 @@ molecule_kvm_all:
   extends: .molecule_roles_testing
 
 
-# Perform ansible molecule testing with default scenario (required docker) for all roles or just selected by git diff.
+# Perform ansible molecule testing with a default scenario (required docker) for all roles or just selected by git diff.
 molecule_default_changes:
   stage: molecule_roles_testing
   rules:
@@ -243,7 +245,7 @@ molecule_default_all:
   extends: .molecule_roles_testing
 
 
-# Prepare ansible galaxy collection
+# Prepare ansible galaxy collection.
 version_increment:
   stage: prepare_collection
   rules:
@@ -260,7 +262,7 @@ version_increment:
   extends: .semantic_version_increment
 
 
-# Update main branch with the latest changes
+# Update the main branch with the latest changes.
 merge_and_push:
   stage: merge_to_main_branch
   rules:

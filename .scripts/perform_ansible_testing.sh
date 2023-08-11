@@ -325,7 +325,7 @@ if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-vers
             "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION automated version increment" || TEST_RESULTS="FAIL"
           if [[ -n "$GITLAB_TOKEN" ]] && [[ -n "$CI_PROJECT_NAMESPACE" ]] && [[ -n "$CI_PROJECT_NAME" ]]; then
             git remote set-url origin \
-              "http://oauth2:${GITLAB_TOKEN}@gitlab.emzior/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git"
+              "http://oauth2:${GITLAB_TOKEN}@g${GITLAB_URL}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git"
             git remote -v
           fi
           git push origin "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION" -o ci.skip || TEST_RESULTS="FAIL"
