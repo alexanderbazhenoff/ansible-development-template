@@ -5,7 +5,7 @@
 # (warn and fails on forgotten credentials and/or passwords find)
 
 
-# Copyright (c) 2022 Aleksandr Bazhenov
+# Copyright (c) 2022-2023 Aleksandr Bazhenov
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -126,6 +126,22 @@ print_performing_action_info() {
   fi
   printf "=%.0s" {1..120}
   printf '\n'
+}
+
+git_switch_current_branch() {
+  (
+    git checkout "$CURRENT_BRANCH"
+    git pull
+  ) || fatal_error "Unable to checkout '$CURRENT_BRANCH' branch as a current. Make sure branch name is correct."
+}
+
+git_add_tag() {
+  git tag -a "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION" "$(git log -n 1 --pretty=format:%H)" -m \
+    "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION automated version increment"
+}
+
+get_ansible_collection_version() {
+  grep -P "^version:\s(\d{1,}.){3}" galaxy.yml 2> /dev/null | awk '{print $2}'
 }
 
 increment_version() {
@@ -308,33 +324,44 @@ if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-vers
         remove_sanity_log
       else
         # collection(s) version increment
-        git checkout "$DESTINATION_BRANCH" || TEST_RESULTS="FAIL"
-        CURRENT_COLLECTION_VERSION=$(grep "version: " galaxy.yml | awk '{print $2}') || TEST_RESULTS="FAIL"
+        NO_DESTINATION_BRANCH=false
+        NO_GALAXY_YML_ERR_MSG="Looks like there is no galaxy.yml file in "
+        git checkout "$DESTINATION_BRANCH" || NO_DESTINATION_BRANCH=true
+        CURRENT_COLLECTION_VERSION=$(get_ansible_collection_version)
+        if [[ -z "$CURRENT_COLLECTION_VERSION" ]] && $NO_DESTINATION_BRANCH; then
+            git_switch_current_branch
+            CURRENT_COLLECTION_VERSION=$(get_ansible_collection_version)
+        fi
+        if [[ -n "$CURRENT_COLLECTION_VERSION" ]] && $NO_DESTINATION_BRANCH; then
+          printf "%s branch. %s getting collection version from $CURRENT_BRANCH branch..." "$NO_GALAXY_YML_ERR_MSG" \
+            "Is this collection and/or namespace is recently added?"
+        elif [[ -z "$CURRENT_COLLECTION_VERSION" ]] && $NO_DESTINATION_BRANCH; then
+          fatal_error "$NO_GALAXY_YML_ERR_MSG'$CURRENT_COLLECTION_VERSION' branch, neither from $CURRENT_BRANCH."
+        fi
         printf "Current %s collection version is %s.\n" "${CHECK_ITEM_SHORT//\//.}" "$CURRENT_COLLECTION_VERSION"
         NEW_COLLECTION_VERSION=$(increment_version "$CURRENT_COLLECTION_VERSION" "$CHANGE_VERSION_LEVEL") || \
-          TEST_RESULTS="FAIL"
+          fatal_error "Unable to calculate new version. Please make sure semantic version was specified."
         printf "According to '%s' change level new version is: %s\n" "$CHANGE_VERSION_LEVEL" "$NEW_COLLECTION_VERSION"
-        git checkout "$CURRENT_BRANCH" || TEST_RESULTS="FAIL"
-        git pull || TEST_RESULTS="FAIL"
-        if [[ $TEST_RESULTS != "FAIL" ]] && [[ -n "$CURRENT_COLLECTION_VERSION" ]]; then
-          sed -i -e "s/.*$CURRENT_COLLECTION_VERSION.*/version: $NEW_COLLECTION_VERSION/g" galaxy.yml && \
-            TEST_RESULTS="PASS" || TEST_RESULTS="FAIL"
-          git add galaxy.yml || TEST_RESULTS="FAIL"
+        git_switch_current_branch
+        (
+          sed -i -e "s/.*$CURRENT_COLLECTION_VERSION.*/version: $NEW_COLLECTION_VERSION/g" galaxy.yml
+          git add galaxy.yml
           git commit -m "${CHECK_ITEM_SHORT//\//.} automated version increment"
-          git tag -a "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION" "$(git log -n 1 --pretty=format:%H)" -m \
-            "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION automated version increment" || TEST_RESULTS="FAIL"
+          git_add_tag || {
+            git tag -d "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION"
+            git_add_tag
+          }
           if [[ -n "$GITLAB_TOKEN" ]] && [[ -n "$CI_PROJECT_NAMESPACE" ]] && [[ -n "$CI_PROJECT_NAME" ]]; then
             git remote set-url origin \
-              "http://oauth2:${GITLAB_TOKEN}@g${GITLAB_URL}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git"
+              "http://oauth2:${GITLAB_TOKEN}@${GITLAB_URL}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git"
             git remote -v
           fi
-          git push origin "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION" -o ci.skip || TEST_RESULTS="FAIL"
-          git merge "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION" || TEST_RESULTS="FAIL"
-          git push origin "$CURRENT_BRANCH" -o ci.skip || TEST_RESULTS="FAIL"
-        else
-          printf "Unable to change version for %s." "$CHECK_ITEM"
-          TEST_RESULTS="FAIL"
-        fi
+          git push origin "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION" -o ci.skip
+          git merge "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION"
+          git push origin "$CURRENT_BRANCH" -o ci.skip
+        ) && TEST_RESULTS="PASS" || TEST_RESULTS="FAIL"
+        [[ $TEST_RESULTS == "FAIL" ]] && falal_error "Unable to change version for ${CHECK_ITEM}."
+
       fi
 
       END=$(date +%s)
