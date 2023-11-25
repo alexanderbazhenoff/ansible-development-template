@@ -63,14 +63,6 @@ variables:
     - touch ansible_lint_ok
     - if [[ $CI_PIPELINE_SOURCE == "push" ]]; then .${ANSIBLE_LINT_SCRIPT_PATH} diff;
       else .${ANSIBLE_LINT_SCRIPT_PATH} all; fi
-  after_script:
-    - echo $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
-    - echo $CI_COMMIT_REF_NAME
-    - echo $CI_PIPELINE_SOURCE
-    - echo $CI_COMMIT_MESSAGE
-    - echo $CI_COMMIT_TAG
-    - echo $GITLAB_USER_LOGIN
-    - echo $GITLAB_USER_NAME
 
 .ansible_test_sanity:
   before_script: *setup_ansible_molecule_requirements
