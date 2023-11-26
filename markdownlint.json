@@ -1,0 +1,19 @@
+{
+  "MD013": {
+    "line_length": 120
+  },
+  "problemMatcher": [
+    {
+      "owner": "markdownlint",
+      "pattern": [
+        {
+          "regexp": "(.*)\\:(\\d+)\\:\\s(\\w+)\\s(.*)",
+          "file": 1,
+          "line": 2,
+          "code": 3,
+          "message": 4
+        }
+      ]
+    }
+  ]
+}
