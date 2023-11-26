@@ -12,7 +12,7 @@ jobs:
         with:
           scandir: '.scripts'
           severity: error
-          check_together: 'yes'
+          check_together: True
           format: 'gcc'
 
   markdown-lint:
