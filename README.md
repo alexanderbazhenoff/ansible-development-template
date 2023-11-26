@@ -110,5 +110,7 @@ and push all changes to the 'main' branch.
 ├── .yamllint                               - yamllint settings for the whole collections
 ├── CONTRIBUTING_template_rus.md            - CONTRIBUTING.md project template (ru)
 ├── LICENSE                                 - LICENSE file
-└── README.md                               - this file
+├── markdownlint.json                       - markdownlint for the whole project
+├── README.md                               - this file in English
+└── README_RUS.md                           - this file in Russian 
 ```

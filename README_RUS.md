@@ -112,6 +112,8 @@ ansible molecule тестирования, таких как [kvm](https://githu
 ├── gitlab-ci.yml                           - файл GitLab CI
 ├── .yamllint                               - общие настройки yamllint
 ├── CONTRIBUTING_template_rus.md            - правила и соглашения при написании кода на русском языке
+├── markdownlint.json                       - настройки markdown lint для всего проекта
 ├── LICENSE                                 - файл лицензии
-└── README.md                               - этот файл
+├── README.md                               - этот файл на английсокм языке
+└── README_RUS.md                           - этот файл на русском языке 
 ```
