@@ -10,4 +10,5 @@ Find more about
 - **example_namespace_1**. An example namespace (1) description.
 - **example_namespace_2**. An example namespace (2) description.
 
-### (!!!) This file should be modified. All files in this folder are examples.
+(!!!) This file should be modified. All files in this folder are examples.
+--------------------------------------------------------------------------
