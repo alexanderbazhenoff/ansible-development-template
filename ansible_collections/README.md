@@ -1,5 +1,4 @@
-Ansible Galaxy Namespaces
--------------------------
+# Ansible Galaxy Namespaces
 
 Ansible roles and collections are associated with a Galaxy namespace. In other words,
 a role is imported into a namespace, and a collection is uploaded or published to a
