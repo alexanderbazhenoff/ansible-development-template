@@ -25,6 +25,7 @@ jobs:
       - uses: articulate/actions-markdownlint@v1
         with:
           files: '**/*.md'
+          config: markdownlint.json
 
   yaml-lint:
     name: yaml lint
