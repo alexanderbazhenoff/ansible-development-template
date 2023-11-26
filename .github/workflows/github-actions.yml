@@ -16,9 +16,19 @@ jobs:
           format: 'gcc'
 
   markdown-lint:
-    name: markdown-lint
+    name: markdown lint
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - uses: articulate/actions-markdownlint@v1
         with:
           files: '**/*.md'
+
+  yaml-lint:
+    name: yaml lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: '*.yml'
