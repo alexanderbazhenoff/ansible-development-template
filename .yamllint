@@ -3,7 +3,6 @@
 extends: default
 ignore: |
   templates/
-  .github/workflows/
   files/*.j2
   README.md
   LICENSE
