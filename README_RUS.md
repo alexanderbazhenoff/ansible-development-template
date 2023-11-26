@@ -1,4 +1,4 @@
-![CI](https://github.com/alexanderbazhenoff/ansible-development-template/actions/workflows/lint.yml/badge.svg?branch=main?event=push)
+![CI](https://github.com/alexanderbazhenoff/ansible-development-template/actions/workflows/lint.yml/badge.svg?branch=main)
 
 # ansible development template
 
