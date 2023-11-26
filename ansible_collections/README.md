@@ -4,7 +4,7 @@ Ansible roles and collections are associated with a Galaxy namespace. In other w
 a role is imported into a namespace, and a collection is uploaded or published to a
 namespace.
 
-Find more about 
+Find more about
 [ansible galaxy namespaces](https://galaxy.ansible.com/docs/contributing/namespaces.html).
 
 - **example_namespace_1**. An example namespace (1) description.
