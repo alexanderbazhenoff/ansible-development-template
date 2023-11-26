@@ -1,3 +1,6 @@
+![CI status badge]
+(https://github.com/alexanderbazhenoff/ansible-development-template/actions/workflows/lint.yml/badge.svg)
+
 # ansible development template
 
 Шаблон для соглашения при написании кода (contributing arrangements), CI скрипты и пример структуры проекта, 

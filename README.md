@@ -1,3 +1,6 @@
+![CI status badge]
+(https://github.com/alexanderbazhenoff/ansible-development-template/actions/workflows/lint.yml/badge.svg)
+
 # ansible development template
 
 Contributing rules template, CI scripts, and folder structure examples for ansible development.
