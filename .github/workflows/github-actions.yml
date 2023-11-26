@@ -3,7 +3,7 @@ permissions: {}
 
 jobs:
   shellcheck:
-    name: Shellcheck
+    name: shellcheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -14,3 +14,11 @@ jobs:
           severity: error
           check_together: 'yes'
           format: 'gcc'
+
+  markdown-lint:
+    name: markdown-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: articulate/actions-markdownlint@v1
+        with:
+          files: '**/*.md'
