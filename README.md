@@ -1,5 +1,4 @@
-![CI status badge]
-(https://github.com/alexanderbazhenoff/ansible-development-template/actions/workflows/lint.yml/badge.svg)
+![CI](https://github.com/alexanderbazhenoff/ansible-development-template/actions/workflows/lint.yml/badge.svg)
 
 # ansible development template
 
