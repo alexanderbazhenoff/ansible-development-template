@@ -1,8 +1,8 @@
-![CI](https://github.com/alexanderbazhenoff/ansible-development-template/actions/workflows/lint.yml/badge.svg?branch=main)
-
 # ansible development template
 
-Шаблон для соглашения при написании кода (contributing arrangements), CI скрипты и пример структуры проекта, 
+Шаблон для соглашения при написании кода (contributing arrangements), GitLab CI, скрипты и пример структуры проекта, 
+
+![CI](https://github.com/alexanderbazhenoff/ansible-development-template/actions/workflows/lint.yml/badge.svg?branch=main)
 
 ## О репозитории
 

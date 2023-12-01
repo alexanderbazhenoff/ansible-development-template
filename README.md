@@ -1,8 +1,8 @@
-![CI](https://github.com/alexanderbazhenoff/ansible-development-template/actions/workflows/lint.yml/badge.svg?branch=main)
-
 # ansible development template
 
-Contributing rules template, CI scripts, and folder structure examples for ansible development.
+Contributing rules template, GitLab CI, scripts, and folder structure examples for ansible development.
+
+![CI](https://github.com/alexanderbazhenoff/ansible-development-template/actions/workflows/lint.yml/badge.svg?branch=main)
 
 ## About
 

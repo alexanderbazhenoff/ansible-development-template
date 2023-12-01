@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 
 
-# Linter and check results script for ansible-lint CI
-#
+# Linter and check results script for ansible-lint CI.
 # Usage: './ansible_lint.sh [lint mode]' (where: lint mode=all|diff)
 
 
-# Copyright (c) 2022 Aleksandr Bazhenov
+# Copyright (c) 2022-2023 Aleksandr Bazhenov
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -22,36 +21,41 @@
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+double_splitter() {
+  printf '=%.0s' {1..120}
+  printf '\n'
+}
+
 LINT_MODE=$1
 ANY_ERR=false
-printf '=%.0s' {1..120}
-printf "\nCurrent lint mode: %s\n\n" "$LINT_MODE"
+double_splitter
+printf "Current lint mode: \e[1;36m%s\e[0m\n \n" "$LINT_MODE"
 ansible --version || exit 1
 ansible-lint --version || exit 1
 
-echo "Starting ansible-lint..."
-# Grep can be modified depending on possible output change during future ansible-lint updates. Be careful!
-ansible-lint -p | grep -v "Found roles" | grep -v "Found playbooks" | grep -v "Examining " | \
+printf "\e[37mStarting ansible-lint...\e[0m\n"
+ansible-lint --force-color -p | grep -v "Found roles" | grep -v "Found playbooks" | grep -v "Examining " | \
   grep -vE "Unknown file type: roles\/.+\/tasks\/main.yml" | sed 's/ *$//g' > lint-results.txt || ANY_ERR=true
 LINT_RESULTS=$(cat lint-results.txt)
 
 if [[ $LINT_MODE == "diff" ]]; then
-  echo "Counting diff of ansible-lint results fot current commit, grep ansible-lint results by diff, etc..."
+  printf "\e[37mCounting diff of ansible-lint results fot current commit, grep ansible-lint results by diff...\e[0m\n"
   GIT_DIFF=$(git diff --name-only "$CI_COMMIT_BEFORE_SHA" "$CI_COMMIT_SHA" || echo "")
   if [[ -n "$GIT_DIFF" ]]; then
     GIT_DIFF_FILES=$(echo "$GIT_DIFF" | wc -l)
     LINT_RESULTS=$(grep "$GIT_DIFF" lint-results.txt)
-    printf '=%.0s' {1..120}
-    printf "\nCurrent commit changes (%s files):\n\n%s \n\n" "$GIT_DIFF_FILES" "$GIT_DIFF"
+    double_splitter
+    printf "Current commit changes (\e[37m%s\e[0m files):\n \n\e[32m%s\e[0m \n \n" "$GIT_DIFF_FILES" "$GIT_DIFF"
   fi
 fi
 
 LINT_RESULTS_LINES=$(echo "$LINT_RESULTS" | wc -l)
-printf '=%.0s' {1..120}
+double_splitter
 if [[ -z "$LINT_RESULTS" ]] && ! $ANY_ERR; then
-  printf "\nNo ansible-lint violations and/or warnings found (%s).\n" "$LINT_MODE"
+  printf "No ansible-lint violation(s) and/or warning(s) found (\e[1;36m%s\e[0m).\n" "$LINT_MODE"
 else
-  printf "\nFound: %s ansible-lint violations (%s):\n\n%s\n" "$LINT_MODE" "$LINT_RESULTS_LINES" "$LINT_RESULTS"
+  printf "Found: \e[31m%s\e[0m ansible-lint violation(s) (\e[1;36m%s\e[0m):\n \n%s\n" "$LINT_RESULTS_LINES" \
+    "$LINT_MODE" "$LINT_RESULTS"
   ANY_ERR=true
 fi
 

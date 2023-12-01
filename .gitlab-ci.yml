@@ -18,14 +18,16 @@
 
 # Variables:
 #
+# PY_COLORS: Enable python color output.
+# ANSIBLE_FORCE_COLOR: Enable ansible color output.
 # GITLAB_TOKEN: Project Access Tokens (required for automated version increment pushes): Settings -> Access Tokens.
 # GITLAB_URL: URL of your GitLab server (local or global).
 # SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_PATH: Relative folder name for molecule requirements*.txt files.
 # SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_NAME: Set-up ansible environment script (see PIP_REQUIREMENTS).
-# PIP_REQUIREMENTS: pip requirements. 'yes' if you would like to install them every tests running.
-# ANSIBLE_LINT_SCRIPT_PATH: Relative path to ansible lint script.
-# INVENTORY_CHECKER_SCRIPT_PATH: Relative path to inventory checker script.
-# ANSIBLE_TESTING_SCRIPT_FULL_PATH: Relative path to main testing script.
+# PIP_REQUIREMENTS: pip requirements, 'yes' if you would like to install them running of molecule testing.
+# ANSIBLE_LINT_SCRIPT_PATH: Relative path to an ansible lint script.
+# INVENTORY_CHECKER_SCRIPT_PATH: Relative path to an inventory checker script.
+# ANSIBLE_TESTING_SCRIPT_FULL_PATH: Relative path to the main testing script.
 # SHELL_CHECK_PATH: Path to perform shellcheck.
 # SHELL_CHECK_SHELL_NAME: Shell-name for shellcheck: https://www.shellcheck.net/
 # SHELL_CHECK_OUTPUT: Shellcheck output format.
@@ -35,6 +37,8 @@
 
 
 variables:
+  PY_COLORS: 1
+  ANSIBLE_FORCE_COLOR: 1
   GITLAB_TOKEN: '********************'
   GITLAB_URL: "gitlab.com"
   SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_PATH: '.scripts/'
