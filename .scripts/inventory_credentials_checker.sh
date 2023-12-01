@@ -5,7 +5,7 @@
 # (warn and fails on forgotten credentials and/or passwords find)
 
 
-# Copyright (c) 2022 Aleksandr Bazhenov
+# Copyright (c) 2022-2023 Aleksandr Bazhenov
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -22,12 +22,12 @@
 
 
 # path to exclude from inventory files found
-INVENTORY_PATH_EXCLUDE="./inventories"
+INVENTORY_PATH_EXCLUDE="./inventories/dut-inventory"
 
 
 INVENTORY_FILES_LIST=$(grep -iEr '^\[[_a-z-]*\:vars\]' | cut -f1 -d":" | grep -v $INVENTORY_PATH_EXCLUDE; echo "")
 printf '=%.0s' {1..120}
-printf "\nAnalyzing ansible inventory .ini files: \n\n%s\n\n" "$INVENTORY_FILES_LIST"
+printf "\n\e[37mAnalyzing ansible inventory .ini files: \n \n\e[32m%s\e[0m\n \n" "$INVENTORY_FILES_LIST"
 
 for FILENAME in $INVENTORY_FILES_LIST; do
   (grep -iEr '^ansible\_(ssh_user|ssh_pass|become_pass)\=.+' "$FILENAME" | sed 's/=.*/\=*/g' | \
@@ -41,6 +41,6 @@ if [[ -z "$VIOLATIONS" ]]; then
   printf "\nNo inventories violations found.\n"
 else
   VIOLATIONS_LINES=$(echo "$VIOLATIONS" | wc -l)
-  printf "\nFound %s inventories violations:\n\n%s\n" "$VIOLATIONS_LINES" "$VIOLATIONS"
+  printf "\nFound \e[31m%s\e[0m inventories violations:\n \n%s\n" "$VIOLATIONS_LINES" "$VIOLATIONS"
   exit 1
 fi

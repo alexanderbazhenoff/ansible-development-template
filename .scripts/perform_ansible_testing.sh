@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 
-# Credentials checker in ansible inventory .ini files for ansible CI
-# (warn and fails on forgotten credentials and/or passwords find)
+# Perform ansible testing for CI: ansible sanity testing, ansible molecule testing and increment version.
 
 
 # Copyright (c) 2022-2023 Aleksandr Bazhenov
@@ -42,8 +41,13 @@ print_usage_help() {
 }
 
 fatal_error() {
-  echo "Error. $1"
+  printf "\n \n%sError:%s $1\n \n" "\e[31m" "\e[0m"
   exit 1
+}
+
+double_splitter() {
+  printf '=%.0s' {1..120}
+  printf '\n'
 }
 
 remove_logs() {
@@ -112,20 +116,29 @@ get_roles_list() {
 }
 
 print_performing_action_info() {
+  local GREEN="${ESC}[32m"
+  local L_BLUE="${ESC}[1;36m"
+  local BLUE="${ESC}[36m"
+  local NO_COL="${ESC}[0m"
   if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-version" ]]; then
     # shellcheck disable=SC2030
-    printf "Performing %s (selection: '%s') for %s collection(s): \n\n%s\n%s\n" "${TEST_MODE//-/ }" "$SELECTION" \
-      "$COLLECTIONS_LIST_LINES" "$COLLECTIONS_LIST" \
-      "$([[ -n "$DIFF_MESSAGE" ]] && printf "\n according to current changes:\n\n%s\n\n" "$DIFF_MESSAGE")"
+    printf "Performing %s (selection: '%s') for %s collection(s): \n \n%s\n%s\n" \
+      "${L_BLUE}${TEST_MODE//-/ }${NO_COL}" \
+      "${L_BLUE}${SELECTION}${NO_COL}" \
+      "${L_BLUE}${COLLECTIONS_LIST_LINES}${NO_COL}" \
+      "${BLUE}${COLLECTIONS_LIST}${NO_COL}" "$([[ -n "$DIFF_MESSAGE" ]] && \
+        printf "\n according to current changes:\n \n%s%s%s\n \n" "$GREEN" "$DIFF_MESSAGE" "$NO_COL")"
   fi
   if [[ $TEST_MODE =~ molecule- ]]; then
     # shellcheck disable=SC2031
-    printf "Performing ansible molecule testing (selection: '%s', scenario: %s) for %s role(s): \n\n%s\n%s\n" \
-      "$SELECTION" "${TEST_MODE#molecule-}" "$ROLES_LIST_LINES" "$ROLES_LIST" \
-      "$([[ -n "$DIFF_MESSAGE" ]] && printf "\n according to current changes:\n\n%s\n\n" "$DIFF_MESSAGE")"
+    printf "Performing ansible molecule testing (selection: '%s', scenario: '%s') for %s role(s): \n \n%s\n%s\n" \
+      "${L_BLUE}${SELECTION}${NO_COL}" \
+      "${L_BLUE}${TEST_MODE#molecule-}${NO_COL}" \
+      "${L_BLUE}${ROLES_LIST_LINES}${NO_COL}" \
+      "${BLUE}${ROLES_LIST}${NO_COL}" "$([[ -n "$DIFF_MESSAGE" ]] && \
+        printf "\n according to current changes:\n \n%s%s%s\n \n" "$GREEN" "$DIFF_MESSAGE" "$NO_COL")"
   fi
-  printf "=%.0s" {1..120}
-  printf '\n'
+  double_splitter
 }
 
 git_switch_current_branch() {
@@ -185,7 +198,9 @@ CHANGE_VERSION_LEVEL="release"
 DESTINATION_BRANCH="master"
 CURRENT_BRANCH="devel"
 ANY_ERR=false
+GITLAB_URL="gitlab.tmispb"
 
+ESC=$(printf '\033')
 PAD=$(printf '%0.1s' "."{1..60})
 START_ALL=$(date +%s)
 
@@ -308,7 +323,8 @@ if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-vers
       DIR=$(pwd)
       cd "$CHECK_ITEM" || fatal_error "Something went wrong, unable to get into $CHECK_ITEM directory"
       CHECK_ITEM_SHORT="${CHECK_ITEM##ansible_collections\/}"
-      printf "\n\nPerforming %s of %s\n" "${TEST_MODE//-/ }" "${CHECK_ITEM_SHORT//\//.}..."
+      printf "\n\e[1m----> \e[1;45m%s\e[0m | \e[1mPerforming \e[36m%s\e[0m\e[1m of \e[44m %s \e[0m...\n" \
+        "$(date '+%Y.%m.%d %H:%M:%S')" "${TEST_MODE//-/ }" "${CHECK_ITEM_SHORT//\//.}"
       START=$(date +%s)
 
       if [[ $TEST_MODE == "ansible-test-sanity" ]]; then
@@ -317,8 +333,8 @@ if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-vers
         ansible-test sanity --docker 2> >(tee sanity_log >&2) && TEST_RESULTS="PASS" || TEST_RESULTS="FAIL"
         ANSIBLE_SANITY_ERRORS="$(cat sanity_log)"
         if [[ -n "$ANSIBLE_SANITY_ERRORS" ]]; then
-          printf "=%.0s" {1..120}
-          printf "\nThere was a violations/warnings:\n\n%s\n\n" "$ANSIBLE_SANITY_ERRORS"
+          double_splitter
+          printf "There was a\e[31m violations/warnings\e[0m:\n \n%s\n \n" "$ANSIBLE_SANITY_ERRORS"
           TEST_RESULTS="FAIL"
         fi
         remove_sanity_log
@@ -367,16 +383,14 @@ if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-vers
       END=$(date +%s)
       [[ $TEST_RESULTS == "FAIL" ]] && ANY_ERR=true
       RUNTIME_HMS="$(((END-START) / 3600))h:$((((END-START) / 60) % 60))m:$(((END-START) % 60))s"
-      printf "=%.0s" {1..120}
-      printf '\n'
+      double_splitter
       cd "$DIR" || fatal_error "Something went wrong, unable to get into $DIR directory."
       ITEM_PRINTABLE="${CHECK_ITEM_SHORT//\//.}"
       ITEM_PAD="$ITEM_PRINTABLE$(printf '%*.*s' 0 $((60 - ${#ITEM_PRINTABLE} - ${#RUNTIME_HMS} )) "$PAD")$RUNTIME_HMS"
       echo "$ITEM_PAD | $TEST_RESULTS" >> overall_results
     done
   else
-    printf "=%.0s" {1..120}
-    printf '\n'
+    double_splitter
     echo "Nothing to test."
   fi
 
@@ -396,17 +410,16 @@ if [[ $TEST_MODE =~ molecule- ]]; then
       if [[ -d "molecule/${TEST_MODE/*-/}" ]] && [[ ! -f ".skip_${TEST_MODE//-/_}" ]]; then
 
         START=$(date +%s)
-        echo "Testing $FULL_ROLE_NAME with '${TEST_MODE/*-/}' scenario..."
+        printf "\n\e[1m----> \e[1;45m%s\e[0m | \e[1mTesting \e[44m %s \e[0m with '\e[36m%s\e[0m' scenario...\n" \
+          "$(date '+%Y.%m.%d %H:%M:%S')" "$FULL_ROLE_NAME" "${TEST_MODE/*-/}"
         if [[ -f "requirements.txt" ]] && [[ $ADDITIONAL_PIP_REQUIEREMENTS == "yes" ]]; then
           printf "Setting up pip requirements:\n%s\n" "$(cat 'requirements.txt')"
           python3 -m pip install -r requirements.txt
-          printf "=%.0s" {1..120}
-          printf '\n'
+          double_splitter
         else
           printf "ADDITIONAL_PIP_REQUIEREMENTS='%s' or no 'requirements.txt' in %s role directory. %s\n" \
             "$ADDITIONAL_PIP_REQUIEREMENTS" "$(pwd)" "Skipping additional pip requirements install."
-          printf "=%.0s" {1..120}
-          printf '\n'
+          double_splitter
         fi
         molecule test -s "${TEST_MODE/*-/}" && TEST_RESULTS="PASS" || TEST_RESULTS="FAIL"
         END=$(date +%s)
@@ -422,8 +435,8 @@ if [[ $TEST_MODE =~ molecule- ]]; then
               "It's ok for kvm molecule testing scenario because this is an optional."
             TEST_RESULTS="SKIP"
           else
-            printf "Molecule testing of %s with '%s' scenario exited with FAIL state: 'molecule/%s' %s %s %s\n" \
-              "$FULL_ROLE_NAME" "${TEST_MODE/*-/}" "${TEST_MODE/*-/}" "directory not found." \
+            printf "%s %s with '%s' scenario exited with \e[31mFAIL\e[0m state: 'molecule/%s' %s %s %s\n" \
+              "Molecule testing of" "$FULL_ROLE_NAME" "${TEST_MODE/*-/}" "${TEST_MODE/*-/}" "directory not found." \
               "It's not ok for default molecule testing scenario because this is strongly required" \
               "or use '.skip_molecule_default' file in ansible role folder instead."
             TEST_RESULTS="FAIL"
@@ -433,8 +446,7 @@ if [[ $TEST_MODE =~ molecule- ]]; then
             "$FULL_ROLE_NAME"
           TEST_RESULTS="SKIP"
         fi
-        printf '=%.0s' {1..120}
-        printf '\n'
+        double_splitter
 
       fi
 
@@ -445,20 +457,20 @@ if [[ $TEST_MODE =~ molecule- ]]; then
       echo "$ITEM_PAD | $TEST_RESULTS" >> overall_results
     done
   else
-    printf "=%.0s" {1..120}
-    printf '\n'
+    double_splitter
     echo "Nothing to test."
   fi
 fi
 
 if [[ -f overall_results ]]; then
-  printf "\n\nOverall:\n\n%s\n" "$(cat overall_results)"
+  printf "\n \n\e[1mOverall:\e[0m\n \n%s\n" "$(sed \
+    "s/PASS/${ESC}[42m PASS ${ESC}[0m/g; s/FAIL/${ESC}[41m FAIL ${ESC}[0m/g; s/SKIP/${ESC}[1;43m SKIP ${ESC}[0m/g" \
+    overall_results || true)"
   END_ALL=$(date +%s)
   RUNTIME_HMS="$(((END_ALL-START_ALL) / 3600))h:$((((END_ALL-START_ALL) / 60) % 60))m:$(((END_ALL-START_ALL) % 60))s"
-  printf "\nTotal: %s\n\n" "$RUNTIME_HMS"
+  printf "\n \n\e[1mTotal\e[0m: %s\n \n" "$RUNTIME_HMS"
 fi
-printf '=%.0s' {1..120}
-printf '\n'
+double_splitter
 
 remove_logs
 
