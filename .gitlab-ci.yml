@@ -116,7 +116,7 @@ stages:
 pre_check:
   stage: pre_check
   rules:
-    - if: '$CI_COMMIT_TAG == null && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $MAIN_BRANCH && 
+    - if: '$CI_COMMIT_TAG == null && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $MAIN_BRANCH &&
       $CI_COMMIT_REF_NAME != $MAIN_BRANCH && $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
   tags:
     - ansible-lint
@@ -145,7 +145,7 @@ ansible_lint:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG == null && $CI_COMMIT_REF_NAME != $MAIN_BRANCH &&
       $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_TAG == null && 
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_TAG == null &&
       $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $MAIN_BRANCH'
   tags:
     - ansible-lint
@@ -166,7 +166,7 @@ ansible_test_sanity:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG == null && $CI_COMMIT_REF_NAME != $MAIN_BRANCH &&
       $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_TAG == null && 
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_TAG == null &&
       $CI_MERGE_REQUEST_TARGET_BRANCH_NAME != $MAIN_BRANCH'
   tags:
     - ansible-lint
@@ -248,7 +248,7 @@ molecule_default_all:
 version_increment:
   stage: prepare_collection
   rules:
-    - if: '$CI_COMMIT_MESSAGE !~ /^(?i)WIP(.?)*/ && $CI_COMMIT_TAG == null && $CI_PIPELINE_SOURCE == "push" && 
+    - if: '$CI_COMMIT_MESSAGE !~ /^(?i)WIP(.?)*/ && $CI_COMMIT_TAG == null && $CI_PIPELINE_SOURCE == "push" &&
       $CI_COMMIT_REF_NAME == $DEVELOP_BRANCH && $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
       changes:
         - ansible_collections/**/*
@@ -265,7 +265,7 @@ version_increment:
 merge_and_push:
   stage: merge_to_main_branch
   rules:
-    - if: '$CI_COMMIT_MESSAGE !~ /^(?i)WIP(.?)*/ && $CI_COMMIT_TAG == null && $CI_PIPELINE_SOURCE == "push" && 
+    - if: '$CI_COMMIT_MESSAGE !~ /^(?i)WIP(.?)*/ && $CI_COMMIT_TAG == null && $CI_PIPELINE_SOURCE == "push" &&
       $CI_COMMIT_REF_NAME == $DEVELOP_BRANCH && $CI_COMMIT_MESSAGE !~ /(.)automated(.)version(.)increment/'
   tags:
     - ansible-push
