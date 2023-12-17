@@ -41,7 +41,7 @@ print_usage_help() {
 }
 
 fatal_error() {
-  printf "\n \n%sError:%s $1\n \n" "\e[31m" "\e[0m"
+  printf "\n \n%sError:%s $1\n \n" "${ESC}[31m" "${ESC}[0m"
   exit 1
 }
 
@@ -51,25 +51,20 @@ double_splitter() {
 }
 
 remove_logs() {
-  if [[ -f "collections_list" ]]; then
-    echo "Clean-up previous 'collections_list' file from $(pwd) directory..."
-    rm -f collections_list
-  fi
-  if [[ -f "roles_list" ]]; then
-    echo "Clean-up previous 'roles_list' file from $(pwd) directory..."
-    rm -f roles_list
-  fi
-  if [[ -f "overall_results" ]]; then
-    echo "Clean-up previous 'overall_results' file from $(pwd) directory..."
-    rm -f overall_results
-  fi
+  find . -maxdepth 1 -type f -name "collections_list_$START_ALL" -or -name "roles_list_$START_ALL" -or \
+    -name "overall_results_$START_ALL" | xargs -0 rm -f
 }
 
 remove_sanity_log() {
-  if [[ -f "sanity_log" ]]; then
-    echo "Clean-up previous 'sanity_log' file from $(pwd) directory..."
-    rm -f sanity_log
-  fi
+  find . -maxdepth 1 -type f -name "sanity_log_$START_ALL" | xargs -0 rm -f
+}
+
+colorize_states() {
+  sed "s/PASS/${ESC}[42m PASS ${ESC}[0m/g; s/FAIL/${ESC}[41m FAIL ${ESC}[0m/g; s/SKIP/${ESC}[1;43m SKIP ${ESC}[0m/g"
+}
+
+print_color_time() {
+  printf "${ESC}[1;45m %s ${ESC}[0m" "$(date '+%Y.%m.%d %H:%M:%S')"
 }
 
 # get ansible collections list in the project
@@ -120,23 +115,24 @@ print_performing_action_info() {
   local L_BLUE="${ESC}[1;36m"
   local BLUE="${ESC}[36m"
   local NO_COL="${ESC}[0m"
+  local AC_MSG="according to current changes"
   if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-version" ]]; then
     # shellcheck disable=SC2030
-    printf "Performing %s (selection: '%s') for %s collection(s): \n \n%s\n%s\n" \
+    printf "\n \nPerforming %s (selection: '%s') for %s collection(s):\n%s\n%s\n" \
       "${L_BLUE}${TEST_MODE//-/ }${NO_COL}" \
       "${L_BLUE}${SELECTION}${NO_COL}" \
       "${L_BLUE}${COLLECTIONS_LIST_LINES}${NO_COL}" \
-      "${BLUE}${COLLECTIONS_LIST}${NO_COL}" "$([[ -n "$DIFF_MESSAGE" ]] && \
-        printf "\n according to current changes:\n \n%s%s%s\n \n" "$GREEN" "$DIFF_MESSAGE" "$NO_COL")"
+      "${BLUE}$(get_printable_role_collection "$COLLECTIONS_LIST")${NO_COL}" \
+      "$([[ -n "$DIFF_MESSAGE" ]] && printf "\n%s:\n%s%s%s\n \n" "$AC_MSG" "$GREEN" "$DIFF_MESSAGE" "$NO_COL")"
   fi
   if [[ $TEST_MODE =~ molecule- ]]; then
     # shellcheck disable=SC2031
-    printf "Performing ansible molecule testing (selection: '%s', scenario: '%s') for %s role(s): \n \n%s\n%s\n" \
+    printf "\n \nPerforming ansible molecule testing (selection: '%s', scenario: '%s') for %s role(s):\n%s\n%s\n" \
       "${L_BLUE}${SELECTION}${NO_COL}" \
       "${L_BLUE}${TEST_MODE#molecule-}${NO_COL}" \
       "${L_BLUE}${ROLES_LIST_LINES}${NO_COL}" \
-      "${BLUE}${ROLES_LIST}${NO_COL}" "$([[ -n "$DIFF_MESSAGE" ]] && \
-        printf "\n according to current changes:\n \n%s%s%s\n \n" "$GREEN" "$DIFF_MESSAGE" "$NO_COL")"
+      "${BLUE}$(get_printable_role_collection "$ROLES_LIST")${NO_COL}" \
+      "$([[ -n "$DIFF_MESSAGE" ]] && printf "\n%s:\n%s%s%s\n \n" "$AC_MSG" "$GREEN" "$DIFF_MESSAGE" "$NO_COL")"
   fi
   double_splitter
 }
@@ -149,12 +145,16 @@ git_switch_current_branch() {
 }
 
 git_add_tag() {
-  git tag -a "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION" "$(git log -n 1 --pretty=format:%H)" -m \
-    "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION automated version increment"
+  git tag -a "$ITEM_PRINTABLE-$NEW_COLLECTION_VERSION" "$(git log -n 1 --pretty=format:%H)" -m \
+    "$ITEM_PRINTABLE-$NEW_COLLECTION_VERSION automated version increment"
 }
 
 get_ansible_collection_version() {
   grep -P "^version:\s(\d{1,}.){3}" galaxy.yml 2> /dev/null | awk '{print $2}'
+}
+
+get_printable_role_collection() {
+  echo "$1" | sed "s/^ansible_collections\///; s/\/roles//; s/\/$//; s/\//./g"
 }
 
 increment_version() {
@@ -201,6 +201,7 @@ ANY_ERR=false
 GITLAB_URL="gitlab.tmispb"
 
 ESC=$(printf '\033')
+BLD="${ESC}[1m"
 PAD=$(printf '%0.1s' "."{1..60})
 START_ALL=$(date +%s)
 
@@ -219,7 +220,7 @@ while [[ $# -gt 0 ]]; do
     shift
     ;;
   -r | --requirements )
-    ADDITIONAL_PIP_REQUIEREMENTS="$2"
+    ADDITIONAL_PIP_REQUIREMENTS="$2"
     shift
     shift
     ;;
@@ -246,23 +247,19 @@ while [[ $# -gt 0 ]]; do
 done
 
 # error handling
-
 if [[ $CHANGE_VERSION_LEVEL != "release" ]] && [[ $CHANGE_VERSION_LEVEL != "minor" ]] && \
   [[ $CHANGE_VERSION_LEVEL != "major" ]]; then
     POSITIONAL+=("$CHANGE_VERSION_LEVEL")
 fi
-
 if [[ $TEST_MODE != "ansible-test-sanity" ]] && [[ $TEST_MODE != "molecule-default" ]] && \
   [[ $TEST_MODE != "molecule-kvm" ]] && [[ $TEST_MODE != "increment-version" ]]; then
     POSITIONAL+=("$TEST_MODE")
 fi
-
 if [[ $SELECTION != "all" ]] && [[ $SELECTION != "diff" ]]; then
   POSITIONAL+=("$SELECTION")
 fi
-
-if [[ $ADDITIONAL_PIP_REQUIEREMENTS != "yes" ]] && [[ $ADDITIONAL_PIP_REQUIEREMENTS != "no" ]]; then
-  POSITIONAL+=("$ADDITIONAL_PIP_REQUIEREMENTS")
+if [[ $ADDITIONAL_PIP_REQUIREMENTS != "yes" ]] && [[ $ADDITIONAL_PIP_REQUIREMENTS != "no" ]]; then
+  POSITIONAL+=("$ADDITIONAL_PIP_REQUIREMENTS")
 fi
 
 for VALUE in "${POSITIONAL[@]}"
@@ -322,19 +319,21 @@ if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-vers
     for CHECK_ITEM in $COLLECTIONS_LIST; do
       DIR=$(pwd)
       cd "$CHECK_ITEM" || fatal_error "Something went wrong, unable to get into $CHECK_ITEM directory"
-      CHECK_ITEM_SHORT="${CHECK_ITEM##ansible_collections\/}"
-      printf "\n\e[1m----> \e[1;45m%s\e[0m | \e[1mPerforming \e[36m%s\e[0m\e[1m of \e[44m %s \e[0m...\n" \
-        "$(date '+%Y.%m.%d %H:%M:%S')" "${TEST_MODE//-/ }" "${CHECK_ITEM_SHORT//\//.}"
+      ITEM_PRINTABLE=$(get_printable_role_collection "$CHECK_ITEM")
+      ITEM_PRINTABLE_COLOR="${ESC}[44m $ITEM_PRINTABLE ${ESC}[0m"
+      TEST_MODE_COLOR="${ESC}[36m${TEST_MODE//-/ }${ESC}[0m"
+      printf "\n%s----> %s | Performing %s of %s...\n" "$BLD" "$(print_color_time)${BLD}" "${TEST_MODE_COLOR}${BLD}" \
+        "$ITEM_PRINTABLE_COLOR"
       START=$(date +%s)
 
       if [[ $TEST_MODE == "ansible-test-sanity" ]]; then
         # ansible-test sanity
         remove_sanity_log
-        ansible-test sanity --docker 2> >(tee sanity_log >&2) && TEST_RESULTS="PASS" || TEST_RESULTS="FAIL"
-        ANSIBLE_SANITY_ERRORS="$(cat sanity_log)"
+        ansible-test sanity --docker 2> >(tee "sanity_log_$START_ALL" >&2) && TEST_RESULTS="PASS" || TEST_RESULTS="FAIL"
+        ANSIBLE_SANITY_ERRORS="$(cat "sanity_log_$START_ALL")"
         if [[ -n "$ANSIBLE_SANITY_ERRORS" ]]; then
           double_splitter
-          printf "There was a\e[31m violations/warnings\e[0m:\n \n%s\n \n" "$ANSIBLE_SANITY_ERRORS"
+          printf "There was a${ESC}[31m violations/warnings\e[0m:\n \n%s\n \n" "$ANSIBLE_SANITY_ERRORS"
           TEST_RESULTS="FAIL"
         fi
         remove_sanity_log
@@ -354,7 +353,8 @@ if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-vers
         elif [[ -z "$CURRENT_COLLECTION_VERSION" ]] && $NO_DESTINATION_BRANCH; then
           fatal_error "$NO_GALAXY_YML_ERR_MSG'$CURRENT_COLLECTION_VERSION' branch, neither from $CURRENT_BRANCH."
         fi
-        printf "Current %s collection version is %s.\n" "${CHECK_ITEM_SHORT//\//.}" "$CURRENT_COLLECTION_VERSION"
+        printf "Current %s collection version is %s%s.\n" "$ITEM_PRINTABLE_COLOR" "$BLD" \
+          "${ESC}[45m$CURRENT_COLLECTION_VERSION${ESC}[0m"
         NEW_COLLECTION_VERSION=$(increment_version "$CURRENT_COLLECTION_VERSION" "$CHANGE_VERSION_LEVEL") || \
           fatal_error "Unable to calculate new version. Please make sure semantic version was specified."
         printf "According to '%s' change level new version is: %s\n" "$CHANGE_VERSION_LEVEL" "$NEW_COLLECTION_VERSION"
@@ -362,9 +362,9 @@ if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-vers
         (
           sed -i -e "s/.*$CURRENT_COLLECTION_VERSION.*/version: $NEW_COLLECTION_VERSION/g" galaxy.yml
           git add galaxy.yml
-          git commit -m "${CHECK_ITEM_SHORT//\//.} automated version increment"
+          git commit -m "$ITEM_PRINTABLE automated version increment"
           git_add_tag || {
-            git tag -d "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION"
+            git tag -d "$ITEM_PRINTABLE-$NEW_COLLECTION_VERSION"
             git_add_tag
           }
           if [[ -n "$GITLAB_TOKEN" ]] && [[ -n "$CI_PROJECT_NAMESPACE" ]] && [[ -n "$CI_PROJECT_NAME" ]]; then
@@ -372,8 +372,8 @@ if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-vers
               "http://oauth2:${GITLAB_TOKEN}@${GITLAB_URL}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git"
             git remote -v
           fi
-          git push origin "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION" -o ci.skip
-          git merge "${CHECK_ITEM_SHORT//\//.}-$NEW_COLLECTION_VERSION"
+          git push origin "$ITEM_PRINTABLE-$NEW_COLLECTION_VERSION" -o ci.skip
+          git merge "$ITEM_PRINTABLE-$NEW_COLLECTION_VERSION"
           git push origin "$CURRENT_BRANCH" -o ci.skip
         ) && TEST_RESULTS="PASS" || TEST_RESULTS="FAIL"
         [[ $TEST_RESULTS == "FAIL" ]] && falal_error "Unable to change version for ${CHECK_ITEM}."
@@ -385,9 +385,11 @@ if [[ $TEST_MODE == "ansible-test-sanity" ]] || [[ $TEST_MODE == "increment-vers
       RUNTIME_HMS="$(((END-START) / 3600))h:$((((END-START) / 60) % 60))m:$(((END-START) % 60))s"
       double_splitter
       cd "$DIR" || fatal_error "Something went wrong, unable to get into $DIR directory."
-      ITEM_PRINTABLE="${CHECK_ITEM_SHORT//\//.}"
       ITEM_PAD="$ITEM_PRINTABLE$(printf '%*.*s' 0 $((60 - ${#ITEM_PRINTABLE} - ${#RUNTIME_HMS} )) "$PAD")$RUNTIME_HMS"
-      echo "$ITEM_PAD | $TEST_RESULTS" >> overall_results
+      echo "$ITEM_PAD | $TEST_RESULTS" >> "overall_results_$START_ALL"
+      printf "\n \n%s<---- %s | %s of %s completed in %s with %s.\n \n" "$BLD" "$(print_color_time)${BLD}" \
+        "${TEST_MODE_COLOR}${BLD}" "${ITEM_PRINTABLE_COLOR}${BLD}" "${RUNTIME_HMS}${BLD}" \
+        "$(echo "$TEST_RESULTS" | colorize_states)"
     done
   else
     double_splitter
@@ -405,20 +407,22 @@ if [[ $TEST_MODE =~ molecule- ]]; then
     for CHECK_ITEM in $ROLES_LIST; do
       DIR=$(pwd)
       cd "$CHECK_ITEM" || fatal_error "Something went wrong, unable to get in $CHECK_ITEM directory."
-      FULL_ROLE_NAME=$(echo "${CHECK_ITEM#ansible_collections\/}" | sed 's/.roles//' | sed 's/\//./g' | sed 's/.$//')
+      FULL_ROLE_NAME=$(get_printable_role_collection "$CHECK_ITEM")
+      FULL_ROLE_NAME_COLOR="$BLD${ESC}[44m $FULL_ROLE_NAME ${ESC}[0m"
+      TEST_MODE_COLOR="${ESC}[0m'${ESC}[36m${TEST_MODE/*-/}${ESC}[0m'"
 
       if [[ -d "molecule/${TEST_MODE/*-/}" ]] && [[ ! -f ".skip_${TEST_MODE//-/_}" ]]; then
 
         START=$(date +%s)
-        printf "\n\e[1m----> \e[1;45m%s\e[0m | \e[1mTesting \e[44m %s \e[0m with '\e[36m%s\e[0m' scenario...\n" \
-          "$(date '+%Y.%m.%d %H:%M:%S')" "$FULL_ROLE_NAME" "${TEST_MODE/*-/}"
-        if [[ -f "requirements.txt" ]] && [[ $ADDITIONAL_PIP_REQUIEREMENTS == "yes" ]]; then
+        printf "\n%s----> %s | Testing %s with %s scenario...%s\n" "$BLD" "$(print_color_time)${BLD}" \
+          "${FULL_ROLE_NAME_COLOR}${BLD}" "${TEST_MODE_COLOR}${BLD}" "${ESC}[0m"
+        if [[ -f "requirements.txt" ]] && [[ $ADDITIONAL_PIP_REQUIREMENTS == "yes" ]]; then
           printf "Setting up pip requirements:\n%s\n" "$(cat 'requirements.txt')"
           python3 -m pip install -r requirements.txt
           double_splitter
         else
-          printf "ADDITIONAL_PIP_REQUIEREMENTS='%s' or no 'requirements.txt' in %s role directory. %s\n" \
-            "$ADDITIONAL_PIP_REQUIEREMENTS" "$(pwd)" "Skipping additional pip requirements install."
+          printf "ADDITIONAL_PIP_REQUIREMENTS='%s' and/or there's no 'requirements.txt' in %s role directory. %s\n" \
+            "$ADDITIONAL_PIP_REQUIREMENTS" "$(pwd)" "Skipping additional pip requirements install."
           double_splitter
         fi
         molecule test -s "${TEST_MODE/*-/}" && TEST_RESULTS="PASS" || TEST_RESULTS="FAIL"
@@ -429,24 +433,24 @@ if [[ $TEST_MODE =~ molecule- ]]; then
 
         RUNTIME_HMS="0h:00m:00s"
         if [[ ! -f ".skip_${TEST_MODE//-/_}" ]]; then
+          NOT_FOUND_COLOR="${ESC}[31mnot found${ESC}[0m"
           if [[ "${TEST_MODE/*-/}" == "kvm" ]]; then
-            printf "Skipping test of %s with '%s' scenario: 'molecule/%s' directory not found. %s\n" \
-              "$FULL_ROLE_NAME" "${TEST_MODE/*-/}" "${TEST_MODE/*-/}" \
-              "It's ok for kvm molecule testing scenario because this is an optional."
+            printf "%s test of %s with %s scenario: 'molecule/%s' directory %s. %s\n" \
+              "$BLD${ESC}[1;33mSkipping${ESC}[0m" "$FULL_ROLE_NAME_COLOR" "$TEST_MODE_COLOR" "${TEST_MODE/*-/}" \
+              "$NOT_FOUND_COLOR" "It's ok for kvm molecule testing scenario because this is an optional."
             TEST_RESULTS="SKIP"
           else
-            printf "%s %s with '%s' scenario exited with \e[31mFAIL\e[0m state: 'molecule/%s' %s %s %s\n" \
-              "Molecule testing of" "$FULL_ROLE_NAME" "${TEST_MODE/*-/}" "${TEST_MODE/*-/}" "directory not found." \
-              "It's not ok for default molecule testing scenario because this is strongly required" \
-              "or use '.skip_molecule_default' file in ansible role folder instead."
+            printf "%s %s with %s scenario exited with${ESC}31m FAIL${ESC}0m state: 'molecule/%s' %s %s. %s %s\n" \
+              "Molecule testing of" "$FULL_ROLE_NAME_COLOR" "$TEST_MODE_COLOR" "${TEST_MODE/*-/}" "directory." \
+              "$NOT_FOUND_COLOR" "It's strongly recommended for default molecule testing scenario or use" \
+              "'.skip_molecule_default' file in ansible role folder instead."
             TEST_RESULTS="FAIL"
           fi
         else
-          printf "File %s exists, skipping %s scenario for %s.\n" ".skip_${TEST_MODE//-/_}" "${TEST_MODE//-/_}" \
-            "$FULL_ROLE_NAME"
+          printf "File %s exists, %s %s scenario for %s.\n" ".skip_${TEST_MODE//-/_}" \
+            "$BLD${ESC}[1;33mskipping${ESC}[0m" "$TEST_MODE_COLOR" "$FULL_ROLE_NAME"
           TEST_RESULTS="SKIP"
         fi
-        double_splitter
 
       fi
 
@@ -454,7 +458,13 @@ if [[ $TEST_MODE =~ molecule- ]]; then
       cd "$DIR" || fatal_error "Something went wrong, unable to get into $DIR directory."
       ITEM_PAD="$FULL_ROLE_NAME$(printf '%*.*s' 0 $((60 - ${#FULL_ROLE_NAME} - ${#RUNTIME_HMS} )) "$PAD")$RUNTIME_HMS"
       RUNTIME_HMS_PAD="$(printf '%*.*s' 0 $((12 - ${#RUNTIME_HMS_PAD} )) "...")$RUNTIME_HMS"
-      echo "$ITEM_PAD | $TEST_RESULTS" >> overall_results
+      echo "$ITEM_PAD | $TEST_RESULTS" >> "overall_results_$START_ALL"
+      if [[ $TEST_RESULTS != "SKIP" ]]; then
+        double_splitter
+        printf "\n \n%s<---- %s | Molecule testing with %s scenario of %s completed in %s with %s.\n \n" "$BLD" \
+          "$(print_color_time)${BLD}" "${TEST_MODE_COLOR}${BLD}" "${FULL_ROLE_NAME_COLOR}${BLD}" \
+          "${RUNTIME_HMS}${BLD}" "$(echo "$TEST_RESULTS" | colorize_states)"
+      fi
     done
   else
     double_splitter
@@ -462,19 +472,15 @@ if [[ $TEST_MODE =~ molecule- ]]; then
   fi
 fi
 
-if [[ -f overall_results ]]; then
-  printf "\n \n\e[1mOverall:\e[0m\n \n%s\n" "$(sed \
-    "s/PASS/${ESC}[42m PASS ${ESC}[0m/g; s/FAIL/${ESC}[41m FAIL ${ESC}[0m/g; s/SKIP/${ESC}[1;43m SKIP ${ESC}[0m/g" \
-    overall_results || true)"
+if [[ -f "overall_results_$START_ALL" ]]; then
+  double_splitter
+  printf "\n \n%sOverall:%s\n \n%s\n" "$BLD" "${ESC}[0m" "$(< "overall_results_$START_ALL" colorize_states || true)"
   END_ALL=$(date +%s)
   RUNTIME_HMS="$(((END_ALL-START_ALL) / 3600))h:$((((END_ALL-START_ALL) / 60) % 60))m:$(((END_ALL-START_ALL) % 60))s"
-  printf "\n \n\e[1mTotal\e[0m: %s\n \n" "$RUNTIME_HMS"
+  printf "\n \n%sTotal%s: %s\n \n" "$BLD" "${ESC}[0m" "$RUNTIME_HMS"
 fi
 double_splitter
-
 remove_logs
-
-# check if any error
 if $ANY_ERR; then
   exit 1
 fi

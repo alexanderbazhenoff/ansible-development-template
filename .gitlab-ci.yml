@@ -1,19 +1,23 @@
----
+# Gitlab CI for ansible collections. Performs various lint, sanity checks, then molecule testing.
 
-### Gitlab CI for ansible collections. Performs various lint, sanity checks and then molecule testing. ###
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-# documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
-# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
-# persons to whom the Software is furnished to do so, subject to the following conditions:
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 #
-# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
-# Software.
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 
 # Variables:
@@ -21,10 +25,9 @@
 # PY_COLORS: Enable python color output.
 # ANSIBLE_FORCE_COLOR: Enable ansible color output.
 # GITLAB_TOKEN: Project Access Tokens (required for automated version increment pushes): Settings -> Access Tokens.
-# GITLAB_URL: URL of your GitLab server (local or global).
 # SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_PATH: Relative folder name for molecule requirements*.txt files.
 # SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_NAME: Set-up ansible environment script (see PIP_REQUIREMENTS).
-# PIP_REQUIREMENTS: pip requirements, 'yes' if you would like to install them running of molecule testing.
+# PIP_REQUIREMENTS: pip requirements, 'yes' if you would like to install them every running of molecule testing.
 # ANSIBLE_LINT_SCRIPT_PATH: Relative path to an ansible lint script.
 # INVENTORY_CHECKER_SCRIPT_PATH: Relative path to an inventory checker script.
 # ANSIBLE_TESTING_SCRIPT_FULL_PATH: Relative path to the main testing script.
@@ -40,7 +43,7 @@ variables:
   PY_COLORS: 1
   ANSIBLE_FORCE_COLOR: 1
   GITLAB_TOKEN: '********************'
-  GITLAB_URL: "gitlab.com"
+  GITLAB_URL: 'gitlab.domain'
   SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_PATH: '.scripts/'
   SETUP_ANSIBLE_MOLECULE_REQUIREMENTS_SCRIPT_NAME: 'setup_ansible_environment.sh'
   PIP_REQUIREMENTS: 'no'
@@ -52,7 +55,7 @@ variables:
   SHELL_CHECK_OUTPUT: 'gcc'
   KVM_IMAGES_PATH: '/var/lib/libvirt/images/ansible'
   DEVELOP_BRANCH: 'devel'
-  MAIN_BRANCH: 'main'
+  MAIN_BRANCH: 'master'
 
 
 .setup_ansible_molecule_requirements: &setup_ansible_molecule_requirements
@@ -124,7 +127,7 @@ pre_check:
     - shellcheck -f ${SHELL_CHECK_OUTPUT} -s ${SHELL_CHECK_SHELL_NAME} ${SHELL_CHECK_PATH}
 
 
-# Perform inventory files check for login/password specified.
+# Perform inventory files check for login/password specified
 credentials_check:
   stage: lint_and_sanity
   rules:
@@ -136,7 +139,7 @@ credentials_check:
     - .${INVENTORY_CHECKER_SCRIPT_PATH}
 
 
-# Perform ansible-lint on the whole project or just git diff.
+# Perform ansible-lint on the whole project or just git diff
 ansible_lint:
   stage: lint_and_sanity
   rules:
@@ -241,7 +244,7 @@ molecule_default_all:
   extends: .molecule_roles_testing
 
 
-# Prepare ansible galaxy collection.
+# Prepare ansible galaxy collection
 version_increment:
   stage: prepare_collection
   rules:
@@ -258,7 +261,7 @@ version_increment:
   extends: .semantic_version_increment
 
 
-# Update the main branch with the latest changes.
+# Update the main branch with the latest changes
 merge_and_push:
   stage: merge_to_main_branch
   rules:
